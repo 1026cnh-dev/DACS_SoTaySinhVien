@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sổ Tay Sinh Viên DLU</title>
+    <link rel="stylesheet" href="student_handbook.css">
+    
+    <!-- LỆNH BẢO VỆ TRANG -->
+    <script>
+        if (!localStorage.getItem('user')) {
+            window.location.replace("auth/auth.html");
+        }
+    </script>
+</head>
+<body>
+
+    <!-- KHUNG GIAO DIỆN SỔ TAY CỦA BẠN BẮT ĐẦU TỪ ĐÂY -->
+    <div style="padding: 20px;">
+        <h1>Chào mừng đến với Sổ tay Sinh viên DLU!</h1>
+        <p>Giao diện chính của bạn sẽ nằm ở đây...</p>
+    </div>
+    <!-- KHUNG GIAO DIỆN SỔ TAY CỦA BẠN KẾT THÚC Ở ĐÂY -->
+
+    <!-- Nút Đăng Xuất (Bạn có thể di chuyển nó vào thanh menu cho đẹp) -->
+    <button id="btnLogout" style="position: absolute; top: 15px; right: 20px; padding: 10px 15px; background: #e11d48; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        Đăng Xuất
+    </button>
+
+    <script src="student_handbook.js"></script>
+</body>
+</html>

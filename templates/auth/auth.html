@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng Nhập Sổ Tay Sinh Viên</title>
+    <link rel="stylesheet" href="auth.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body>
+    <div id="g_id_onload"
+         data-client_id="YOUR_GOOGLE_CLIENT_ID_HERE" 
+         data-context="signin"
+         data-ux_mode="popup"
+         data-callback="handleGoogleLogin"
+         data-auto_prompt="false">
+    </div>
+
+    <div class="container" id="container">
+        
+        <!-- KHUNG ĐĂNG KÝ -->
+        <div class="form-container sign-up-container">
+            <form id="register-form">
+                <h2>Đăng Ký Tài Khoản</h2>
+                <p class="subtitle">Tạo tài khoản mới để trải nghiệm hệ thống</p>
+                <div id="reg-error-msg" class="error-msg" style="display:none;"></div>
+                
+                <div class="input-group">
+                    <input type="text" id="reg-name" placeholder="Họ và tên" required />
+                    <i class="fa-regular fa-user"></i>
+                </div>
+                <div class="input-group">
+                    <input type="email" id="reg-email" placeholder="Email của bạn" required />
+                    <i class="fa-regular fa-envelope"></i>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="reg-password" placeholder="Mật khẩu" required />
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                
+                <button type="submit" class="btn-submit">Đăng Ký</button>
+
+                <div class="divider"><span>HOẶC ĐĂNG KÝ VỚI</span></div>
+                <div class="social-container">
+                    <div class="google-wrapper">
+                        <button type="button" class="social-icon google"><i class="fa-brands fa-google"></i></button>
+                        <div class="g_id_signin custom-g-btn" data-type="icon" data-shape="circle" data-theme="outline" data-size="large"></div>
+                    </div>
+                    <button type="button" class="social-icon facebook"><i class="fa-brands fa-facebook-f"></i></button>
+                    <button type="button" class="social-icon zalo"><span class="zalo-text">Z</span></button>
+                </div>
+            </form>
+        </div>
+
+        <!-- KHUNG ĐĂNG NHẬP -->
+        <div class="form-container sign-in-container">
+            <form id="login-form">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <h2>Sổ Tay Sinh Viên</h2>
+                <div id="login-error-msg" class="error-msg" style="display:none;"></div>
+
+                <div class="input-group" style="margin-top: 15px;">
+                    <input type="email" id="login-email" placeholder="Email của bạn" required />
+                    <i class="fa-regular fa-envelope"></i>
+                </div>
+                <div class="input-group">
+                    <input type="password" id="login-password" placeholder="Mật khẩu" required />
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                
+                <button type="submit" class="btn-submit">Đăng Nhập</button>
+                
+                <div class="divider"><span>HOẶC ĐĂNG NHẬP VỚI</span></div>
+                <div class="social-container">
+                    <div class="google-wrapper">
+                        <button type="button" class="social-icon google"><i class="fa-brands fa-google"></i></button>
+                        <div class="g_id_signin custom-g-btn" data-type="icon" data-shape="circle" data-theme="outline" data-size="large"></div>
+                    </div>
+                    <button type="button" class="social-icon facebook"><i class="fa-brands fa-facebook-f"></i></button>
+                    <button type="button" class="social-icon zalo"><span class="zalo-text">Z</span></button>
+                </div>
+                
+                <a href="../student_handbook.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Quay lại trang chủ</a>
+            </form>
+        </div>
+
+        <div class="blue-bg"></div>
+
+        <!-- OVERLAY -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Mừng trở lại!</h1>
+                    <p>Để duy trì kết nối, vui lòng đăng nhập bằng tài khoản của bạn</p>
+                    <button class="ghost" id="signIn">Đăng Nhập Ngay</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>Chào bạn mới!</h1>
+                    <p>Bắt đầu hành trình với Sổ tay Sinh viên DLU ngay hôm nay</p>
+                    <button class="ghost" id="signUp">Tạo Tài Khoản</button>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+    <script src="auth.js"></script>
+</body>
+</html>
