@@ -12,8 +12,10 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/lib/pq"      // Driver cho PostgreSQL (Supabase)
+	_ "modernc.org/sqlite"     // Driver cho SQLite (Local)
 )
 
 //go:embed templates
@@ -38,6 +40,7 @@ type User struct {
 }
 
 var db *sql.DB
+var isPostgres bool // Cờ nhận diện môi trường
 
 func hashPassword(password string) string {
 	h := sha256.New()
@@ -45,57 +48,61 @@ func hashPassword(password string) string {
 	return hex.EncodeToString(h.Sum(nil))
 }
 
+// Hàm thông minh: Tự động đổi dấu "?" (của SQLite) sang "$1, $2" nếu đang chạy Postgres
+func adaptQuery(query string) string {
+	if !isPostgres {
+		return query
+	}
+	parts := strings.Split(query, "?")
+	var result strings.Builder
+	for i := 0; i < len(parts)-1; i++ {
+		result.WriteString(parts[i])
+		result.WriteString("$" + strconv.Itoa(i+1))
+	}
+	result.WriteString(parts[len(parts)-1])
+	return result.String()
+}
+
 func initDB() {
+	dbUrl := os.Getenv("DATABASE_URL")
 	var err error
-	_, errCheck := os.Stat("database.db")
-	dbExists := !os.IsNotExist(errCheck)
 
-	db, err = sql.Open("sqlite", "database.db")
-	if err != nil {
-		log.Fatal(err)
-	}
+	// NẾU CÓ BIẾN MÔI TRƯỜNG DATABASE_URL -> CHẠY SUPABASE
+	if dbUrl != "" {
+		isPostgres = true
+		db, err = sql.Open("postgres", dbUrl)
+		if err != nil {
+			log.Fatal("Lỗi kết nối Supabase: ", err)
+		}
+		fmt.Println("🚀 Đã kết nối với Database Supabase (PostgreSQL) thành công!")
+	} else {
+		// NẾU KHÔNG CÓ -> CHẠY SQLITE LOCAL
+		isPostgres = false
+		_, errCheck := os.Stat("database.db")
+		dbExists := !os.IsNotExist(errCheck)
 
-	// Đảm bảo bảng users luôn tồn tại với cấu trúc chuẩn để tránh lỗi khi đăng ký
-	createUsersTableSQL := `
-	CREATE TABLE IF NOT EXISTS users (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
-		full_name TEXT NOT NULL,
-		email TEXT UNIQUE NOT NULL,
-		password_hash TEXT NOT NULL,
-		auth_provider TEXT DEFAULT 'local',
-		role TEXT DEFAULT 'student'
-	);`
-	_, err = db.Exec(createUsersTableSQL)
-	if err != nil {
-		log.Fatal("Lỗi tạo bảng users: ", err)
-	}
+		db, err = sql.Open("sqlite", "database.db")
+		if err != nil {
+			log.Fatal(err)
+		}
 
-	if !dbExists {
-		fmt.Println("Phát hiện lần chạy đầu tiên. Đang khởi tạo Database từ web.sql (nếu có)...")
-		sqlBytes, err := os.ReadFile("web.sql")
-		if err == nil {
+		if !dbExists {
+			fmt.Println("Đang khởi tạo SQLite từ web.sql...")
+			sqlBytes, err := os.ReadFile("web.sql")
+			if err != nil {
+				log.Fatal("Lỗi: Không tìm thấy file web.sql! ", err)
+			}
 			_, err = db.Exec(string(sqlBytes))
 			if err != nil {
-				fmt.Println("Cảnh báo khi chạy web.sql: ", err)
-			} else {
-				fmt.Println("Đã nạp dữ liệu từ web.sql thành công!")
+				log.Fatal("Lỗi khi chạy lệnh SQL: ", err)
 			}
-		} else {
-			fmt.Println("Không tìm thấy file web.sql, hệ thống sử dụng cấu trúc mặc định.")
-		}
 
-		// Tạo tài khoản Admin mẫu nếu chưa có
-		var count int
-		db.QueryRow("SELECT COUNT(*) FROM users").Scan(&count)
-		if count == 0 {
 			adminPass := hashPassword("123456")
-			_, err = db.Exec("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, ?, ?, ?)", "Quản Trị Viên", "admin@example.com", adminPass, "local", "admin")
-			if err == nil {
-				fmt.Println("Đã tạo tài khoản Admin mặc định (admin@example.com / 123456) thành công!")
-			}
+			db.Exec("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, ?, ?, ?)", "Quản Trị Viên", "admin@example.com", adminPass, "local", "admin")
+			fmt.Println("Đã nạp dữ liệu từ web.sql và tạo Admin thành công!")
+		} else {
+			fmt.Println("💻 Đã kết nối với SQLite Local thành công!")
 		}
-	} else {
-		fmt.Println("Đã kết nối với Database hiện tại thành công!")
 	}
 }
 
@@ -111,7 +118,7 @@ func main() {
 			hashed := hashPassword(creds.Password)
 
 			var user User
-			err := db.QueryRow("SELECT id, full_name, email, role FROM users WHERE email = ? AND password_hash = ? AND auth_provider = 'local'", creds.Email, hashed).Scan(&user.ID, &user.FullName, &user.Email, &user.Role)
+			err := db.QueryRow(adaptQuery("SELECT id, full_name, email, role FROM users WHERE email = ? AND password_hash = ? AND auth_provider = 'local'"), creds.Email, hashed).Scan(&user.ID, &user.FullName, &user.Email, &user.Role)
 			if err != nil {
 				http.Error(w, `{"error": "Sai email hoặc mật khẩu"}`, http.StatusUnauthorized)
 				return
@@ -120,22 +127,22 @@ func main() {
 		}
 	})
 
-	// 2. API Đăng ký thủ công (Đã bỏ chặn email trường, hỗ trợ mọi email)
+	// 2. API Đăng ký thủ công
 	http.HandleFunc("/api/auth/register", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		if r.Method == http.MethodPost {
 			var newUser User
 			json.NewDecoder(r.Body).Decode(&newUser)
 
-			if newUser.Email == "" || newUser.Password == "" || newUser.FullName == "" {
-				http.Error(w, `{"error": "Vui lòng nhập đầy đủ thông tin"}`, http.StatusBadRequest)
+			if !strings.HasSuffix(newUser.Email, "@dlu.edu.vn") {
+				http.Error(w, `{"error": "Chỉ chấp nhận email của trường Đại học Đà Lạt (@dlu.edu.vn)"}`, http.StatusBadRequest)
 				return
 			}
 
 			hashed := hashPassword(newUser.Password)
-			_, err := db.Exec("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, ?, 'local', ?)", newUser.FullName, newUser.Email, hashed, "student")
+			_, err := db.Exec(adaptQuery("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, ?, 'local', ?)"), newUser.FullName, newUser.Email, hashed, "student")
 			if err != nil {
-				http.Error(w, `{"error": "Email này đã được sử dụng hoặc có lỗi xảy ra"}`, http.StatusBadRequest)
+				http.Error(w, `{"error": "Email này đã tồn tại hoặc có lỗi xảy ra"}`, http.StatusBadRequest)
 				return
 			}
 			w.WriteHeader(http.StatusCreated)
@@ -165,17 +172,33 @@ func main() {
 			}
 			json.NewDecoder(resp.Body).Decode(&googleData)
 
+			if !strings.HasSuffix(googleData.Email, "@dlu.edu.vn") {
+				http.Error(w, `{"error": "Vui lòng sử dụng email trường (@dlu.edu.vn) để đăng nhập"}`, http.StatusBadRequest)
+				return
+			}
+
 			var user User
-			err = db.QueryRow("SELECT id, full_name, email, role FROM users WHERE email = ?", googleData.Email).Scan(&user.ID, &user.FullName, &user.Email, &user.Role)
+			err = db.QueryRow(adaptQuery("SELECT id, full_name, email, role FROM users WHERE email = ?"), googleData.Email).Scan(&user.ID, &user.FullName, &user.Email, &user.Role)
 
 			if err == sql.ErrNoRows {
-				res, err := db.Exec("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, '', 'google', 'student')", googleData.Name, googleData.Email)
+				// Cú pháp lấy ID sau khi INSERT giữa Postgres và SQLite khác nhau
+				var insertedID int
+				if isPostgres {
+					err = db.QueryRow(adaptQuery("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, '', 'google', 'student') RETURNING id"), googleData.Name, googleData.Email).Scan(&insertedID)
+				} else {
+					res, errExec := db.Exec(adaptQuery("INSERT INTO users (full_name, email, password_hash, auth_provider, role) VALUES (?, ?, '', 'google', 'student')"), googleData.Name, googleData.Email)
+					if errExec == nil {
+						id, _ := res.LastInsertId()
+						insertedID = int(id)
+					}
+					err = errExec
+				}
+
 				if err != nil {
 					http.Error(w, `{"error": "Lỗi tạo tài khoản từ Google"}`, http.StatusInternalServerError)
 					return
 				}
-				id, _ := res.LastInsertId()
-				user = User{ID: int(id), FullName: googleData.Name, Email: googleData.Email, Role: "student"}
+				user = User{ID: insertedID, FullName: googleData.Name, Email: googleData.Email, Role: "student"}
 			} else if err != nil {
 				http.Error(w, `{"error": "Lỗi cơ sở dữ liệu"}`, http.StatusInternalServerError)
 				return
@@ -208,7 +231,7 @@ func main() {
 		if r.Method == http.MethodGet {
 			idQuery := r.URL.Query().Get("id")
 			if idQuery != "" {
-				row := db.QueryRow("SELECT id, title, content, category_id FROM posts WHERE id = ?", idQuery)
+				row := db.QueryRow(adaptQuery("SELECT id, title, content, category_id FROM posts WHERE id = ?"), idQuery)
 				var p Post
 				if err := row.Scan(&p.ID, &p.Title, &p.Content, &p.CategoryID); err != nil {
 					http.Error(w, `{"error": "Không tìm thấy bài viết"}`, http.StatusNotFound)
@@ -222,7 +245,7 @@ func main() {
 			var rows *sql.Rows
 			if categoryQuery != "" {
 				catID, _ := strconv.Atoi(categoryQuery)
-				rows, _ = db.Query("SELECT id, title, content, category_id FROM posts WHERE category_id = ? ORDER BY id DESC", catID)
+				rows, _ = db.Query(adaptQuery("SELECT id, title, content, category_id FROM posts WHERE category_id = ? ORDER BY id DESC"), catID)
 			} else {
 				rows, _ = db.Query("SELECT id, title, content, category_id FROM posts ORDER BY id DESC")
 			}
@@ -244,7 +267,7 @@ func main() {
 		if r.Method == http.MethodPost {
 			var newPost Post
 			json.NewDecoder(r.Body).Decode(&newPost)
-			_, err := db.Exec("INSERT INTO posts (title, content, category_id) VALUES (?, ?, ?)", newPost.Title, newPost.Content, newPost.CategoryID)
+			_, err := db.Exec(adaptQuery("INSERT INTO posts (title, content, category_id) VALUES (?, ?, ?)"), newPost.Title, newPost.Content, newPost.CategoryID)
 			if err != nil {
 				http.Error(w, `{"error": "Lỗi lưu dữ liệu"}`, http.StatusInternalServerError)
 				return
@@ -255,24 +278,15 @@ func main() {
 		}
 	})
 
-	// ==========================================
-	// CẤU HÌNH ĐIỀU HƯỚNG VÀ PHỤC VỤ FILE TĨNH
-	// ==========================================
-	frontend, err := fs.Sub(templateFiles, "templates")
-	if err != nil {
-		log.Fatal("Lỗi khi nạp thư mục templates: ", err)
+	// HỖ TRỢ CỔNG ĐỘNG (DYNAMIC PORT) CHO RENDER VÀ LOCAL
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080" // Cổng mặc định khi chạy Local
 	}
 
-	fileServer := http.FileServer(http.FS(frontend))
-
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.Redirect(w, r, "/student_handbook.html", http.StatusFound)
-			return
-		}
-		fileServer.ServeHTTP(w, r)
-	})
-
-	fmt.Println("Server đang chạy! Vui lòng truy cập: http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	frontend, _ := fs.Sub(templateFiles, "templates")
+	http.Handle("/", http.FileServer(http.FS(frontend)))
+	
+	fmt.Println("🌐 Server đang lắng nghe tại cổng :" + port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
