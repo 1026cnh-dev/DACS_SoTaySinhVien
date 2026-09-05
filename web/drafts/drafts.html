@@ -1,0 +1,50 @@
+{{define "drafts.html"}}<!doctype html>
+<html lang="vi">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{.Title}} | Sổ tay sinh viên</title><link rel="stylesheet" href="/web/home/home.css?v=2.0.0"><link rel="stylesheet" href="/web/drafts/drafts.css?v=2.0.0"><link rel="stylesheet" href="/web/shared/header.css?v=2.0.0"></head>
+<body class="category-nav-only-page">
+{{template "site_category_nav" .}}
+<main class="shell page">
+  <div class="page-head"><div><span>THƯ VIỆN CÁ NHÂN</span><h1>Bài viết đã lưu</h1><p>Lưu các bài viết hữu ích để có thể mở lại nhanh bất cứ lúc nào.</p></div><a class="new-btn" href="/">Khám phá bài viết</a></div>
+
+  <section class="saved-section">
+    <div class="section-heading"><div><span>ĐÃ LƯU</span><h2>Bài viết công khai</h2></div><strong>{{len .SavedPosts}}</strong></div>
+    {{if .SavedPosts}}
+    <div class="saved-grid">
+      {{range .SavedPosts}}
+      <article class="saved-card">
+        <a class="saved-card-main" href="/bai-viet/{{.Post.ID}}">
+          {{if .Meta.ImageURL}}<img class="saved-image" src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async">{{else}}<div class="saved-placeholder"><span>{{slice .Post.CategoryName 0 1}}</span></div>{{end}}
+          <div class="saved-copy"><div class="saved-meta"><span>@{{.Post.CategoryName}}</span><time>{{dateVN .Post.CreatedAt}}</time></div><h3>{{.Post.Title}}</h3><p>{{excerpt .Post.Summary}}</p><div class="saved-stats"><span>{{.Stats.Score}} điểm</span><span>{{.Stats.Comments}} bình luận</span></div></div>
+        </a>
+        <form method="post" action="/post/save" class="unsave-form"><input type="hidden" name="post_id" value="{{.Post.ID}}"><input type="hidden" name="next" value="/bai-da-luu"><button type="submit"><img src="/web/icons/bookmark.svg?v=2.0.0" alt=""> Bỏ lưu</button></form>
+      </article>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="empty saved-empty"><div class="empty-icon"><img src="/web/icons/bookmark.svg?v=2.0.0" alt=""></div><h2>Chưa lưu bài viết nào</h2><p>Bấm nút <b>Lưu</b> trên thẻ bài viết ở trang chủ để thêm vào đây.</p><a href="/">Xem bài viết</a></div>
+    {{end}}
+  </section>
+
+  <section class="private-drafts-section">
+    <div class="section-heading"><div><span>RIÊNG TƯ</span><h2>Bản nháp đang soạn</h2></div><strong>{{len .Drafts}}</strong></div>
+    {{if .Drafts}}
+    <div class="draft-grid">
+      {{range .Drafts}}
+      <article class="draft-card">
+        <div class="draft-top"><span class="status">BẢN NHÁP</span><span class="category">{{if .CategoryName}}{{.CategoryName}}{{else}}Chưa chọn chuyên mục{{end}}</span></div>
+        <h2>{{if .Title}}{{.Title}}{{else}}Bài viết chưa có tiêu đề{{end}}</h2>
+        <p>{{if .Content}}{{excerpt .Content}}{{else}}Chưa có nội dung. Bạn có thể mở lại để tiếp tục soạn bài.{{end}}</p>
+        <small>Cập nhật {{dateVN .UpdatedAt}}</small>
+        <div class="draft-actions"><a class="edit" href="/dang-bai?draft={{.ID}}">Tiếp tục chỉnh sửa</a><form method="post" action="/draft/delete" onsubmit="return confirm('Xóa bản nháp này?')"><input type="hidden" name="id" value="{{.ID}}"><button>Xóa</button></form></div>
+      </article>
+      {{end}}
+    </div>
+    {{else}}
+    <div class="draft-empty-inline">Chưa có bản nháp riêng. Khi đang soạn bài, chọn <b>Lưu riêng</b> để giữ lại.</div>
+    {{end}}
+  </section>
+</main>
+
+<script src="/web/drafts/drafts.js?v=2.0.0"></script>
+<script src="/web/shared/header.js?v=2.0.0"></script>
+</body></html>{{end}}

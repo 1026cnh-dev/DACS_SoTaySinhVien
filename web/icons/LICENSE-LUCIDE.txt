@@ -1,0 +1,8 @@
+Lucide Icons reference
+https://lucide.dev/icons/
+
+Lucide is released under the ISC License.
+Copyright (c) Lucide Icons and Contributors.
+See: https://lucide.dev/license
+
+The SVG icons in this folder follow the Lucide visual language and are included for use in this project.

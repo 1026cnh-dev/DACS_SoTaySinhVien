@@ -1,0 +1,175 @@
+{{define "submit.html"}}<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>{{.Title}} | Sổ tay sinh viên</title><link rel="stylesheet" href="/web/home/home.css?v=2.0.0"><link rel="stylesheet" href="/web/submit/submit.css?v=2.0.0"><link rel="stylesheet" href="/web/shared/header.css?v=2.0.0"></head>
+<body class="category-nav-only-page">
+{{template "site_category_nav" .}}
+<main class="shell submit-wrap">
+  <div class="top-actions">
+    <a class="back-btn" href="/"><img class="action-svg" src="/web/icons/arrow-left.svg?v=2.0.0" alt=""> Trở lại</a>
+    <button class="preview-top-btn" type="button" id="previewPostBtn"><img src="/web/icons/eye.svg?v=2.0.0" alt=""> Xem trước</button>
+    <a class="saved-top-btn" href="/bai-da-luu"><img src="/web/icons/bookmark.svg?v=2.0.0" alt=""> Bài đã lưu</a>
+  </div>
+  <section class="submit-card">
+    <div class="heading"><span>{{if .IsEditing}}CHỈNH SỬA BÀI VIẾT{{else}}ĐĂNG BÀI{{end}}</span><h1>{{if .IsEditing}}Sửa bài viết{{else}}Tạo bài đăng mới{{end}}</h1><p>{{if .IsEditing}}Chỉnh sửa nội dung của bài viết thuộc tài khoản của bạn.{{else}}Chọn nơi đăng trước. Form bên dưới sẽ tự thay đổi theo cấu hình của từng chuyên mục.{{end}}</p></div>
+    {{if .Message}}<div class="alert">{{.Message}}</div>{{end}}
+    <form method="post" action="{{if .IsEditing}}/bai-viet/sua{{else}}/dang-bai{{end}}" id="submitPostForm" enctype="multipart/form-data" data-custom-values-b64="{{b64 .CustomFieldValuesJSON}}">
+      {{if .IsEditing}}<input type="hidden" name="post_id" value="{{.EditPostID}}">{{end}}
+      <input type="hidden" name="draft_id" value="{{if .Draft}}{{.Draft.ID}}{{end}}">
+      <div class="destination-box">
+        <div class="destination-head">
+          <div>
+            <span class="destination-kicker">NƠI ĐĂNG BÀI</span>
+            <h2>Chọn chuyên mục</h2>
+            <p>Hãy chọn đúng nơi đăng để hệ thống hiển thị form phù hợp với nội dung của bạn.</p>
+          </div>
+          <span class="required-chip">Bắt buộc</span>
+        </div>
+
+        <div class="category-picker" id="categoryPicker">
+          <select name="category_id" id="categorySelect" class="native-category-select" required aria-label="Chọn chuyên mục">
+            <option value="">-- Chọn chuyên mục --</option>
+            {{range .Categories}}<option value="{{.ID}}" data-config-b64="{{b64 .FormConfig}}" data-document-formats="{{.DocumentFormats}}" {{if $.Draft}}{{if eq $.Draft.CategoryID .ID}}selected{{end}}{{end}}>{{.Name}}</option>{{end}}
+          </select>
+
+          <button type="button" class="category-trigger" id="categoryTrigger" aria-expanded="false">
+            <span class="category-trigger-icon"><img src="/web/icons/layout-grid.svg?v=2.0.0" alt=""></span>
+            <span class="category-trigger-copy"><small>Đăng ở đâu?</small><strong id="selectedCategoryText">Chọn một chuyên mục</strong></span>
+            <img class="category-chevron" src="/web/icons/chevron-down.svg?v=2.0.0" alt="">
+          </button>
+
+          <div class="category-menu" id="categoryMenu" hidden>
+            <div class="category-menu-head"><strong>Chuyên mục của bài viết</strong><span>Chọn 1 mục</span></div>
+            <div class="category-options">
+              {{range .Categories}}
+              <button type="button" class="category-option" data-value="{{.ID}}">
+                <span class="category-option-icon">
+                  {{if eq .Slug "hoc-tap"}}<img src="/web/icons/book-open.svg?v=2.0.0" alt="">
+                  {{else if eq .Slug "hoc-bong"}}<img src="/web/icons/graduation-cap.svg?v=2.0.0" alt="">
+                  {{else if eq .Slug "su-kien"}}<img src="/web/icons/calendar-days.svg?v=2.0.0" alt="">
+                  {{else if eq .Slug "ky-nang"}}<img src="/web/icons/lightbulb.svg?v=2.0.0" alt="">
+                  {{else if eq .Slug "viec-lam"}}<img src="/web/icons/briefcase-business.svg?v=2.0.0" alt="">
+                  {{else if eq .Slug "thong-bao"}}<img src="/web/icons/bell.svg?v=2.0.0" alt="">
+                  {{else}}<img src="/web/icons/folder.svg?v=2.0.0" alt="">{{end}}
+                </span>
+                <span class="category-option-copy"><strong>{{.Name}}</strong><small>Đăng nội dung vào {{.Name}}</small></span>
+                <span class="category-check"><img src="/web/icons/check.svg?v=2.0.0" alt="Đã chọn"></span>
+              </button>
+              {{end}}
+            </div>
+          </div>
+        </div>
+        <div class="destination-help"><img src="/web/icons/circle-help.svg?v=2.0.0" alt=""><span>Form bên dưới sẽ tự thay đổi ngay sau khi bạn chọn chuyên mục.</span></div>
+      </div>
+
+      <div class="dynamic-fields" id="dynamicFields">
+        <section class="form-block" data-field="title">
+          <label>Tiêu đề<span class="required-mark"></span>
+            <input name="title" maxlength="220" placeholder="Nhập tiêu đề bài viết" value="{{if .Draft}}{{.Draft.Title}}{{end}}" data-required-target>
+          </label>
+        </section>
+
+        <section class="form-block" data-field="content">
+          <label>Nội dung<span class="required-mark"></span></label>
+          <div class="editor-shell"><div class="editor-toolbar"><button type="button"><b>B</b></button><button type="button"><i>I</i></button><button type="button"><u>U</u></button><span>Roboto⌄</span><span>14⌄</span><button type="button">🔗</button><button type="button">▦</button><button type="button">☷</button></div><textarea name="content" rows="9" placeholder="Nhập nội dung bài viết..." data-required-target>{{if .Draft}}{{.Draft.Content}}{{end}}</textarea></div>
+        </section>
+
+        <section class="form-block two-col" data-field="image">
+          <label>Ảnh bài viết<span class="required-mark"></span><input type="file" name="image" accept="image/jpeg,image/png,image/webp" data-required-target data-existing="{{.DraftMeta.ImageURL}}"><small>JPG, PNG hoặc WEBP · tối đa 8 MB{{if .DraftMeta.ImageURL}} · Đã lưu ảnh trước đó{{end}}</small></label>
+        </section>
+
+        <section class="form-block two-col" data-field="deadline">
+          <label>Hạn cuối<span class="required-mark"></span><input type="date" name="deadline" value="{{.DraftMeta.Deadline}}" data-required-target></label>
+        </section>
+
+        <section class="form-block two-col" data-field="company_logo">
+          <label>Logo công ty<span class="required-mark"></span><input type="file" name="company_logo" accept="image/jpeg,image/png,image/webp" data-required-target data-existing="{{.DraftMeta.CompanyLogo}}">{{if .DraftMeta.CompanyLogo}}<small>Đã lưu logo trước đó</small>{{end}}</label>
+        </section>
+
+        <section class="form-block two-col" data-field="website">
+          <label>Website<span class="required-mark"></span><input type="url" name="website" value="{{.DraftMeta.Website}}" placeholder="https://example.com" data-required-target></label>
+        </section>
+
+        <section class="form-block two-col" data-field="fanpage">
+          <label>Fanpage<span class="required-mark"></span><input type="url" name="fanpage" value="{{.DraftMeta.Fanpage}}" placeholder="https://facebook.com/..." data-required-target></label>
+        </section>
+
+        <section class="form-block" data-field="recruitment_content">
+          <label>Nội dung tuyển dụng<span class="required-mark"></span></label>
+          <div class="editor-shell"><div class="editor-toolbar"><button type="button"><b>B</b></button><button type="button"><i>I</i></button><button type="button"><u>U</u></button><span>Roboto⌄</span><span>14⌄</span><button type="button">🔗</button><button type="button">▦</button><button type="button">☷</button></div><textarea name="recruitment_content" rows="8" placeholder="Giới thiệu doanh nghiệp, chương trình tuyển dụng..." data-required-target>{{.DraftMeta.RecruitmentContent}}</textarea></div>
+        </section>
+
+        <section class="form-block two-col" data-field="cv_email">
+          <label>Email nhận CV ứng tuyển<span class="required-mark"></span><input type="email" name="cv_email" value="{{.DraftMeta.CVEmail}}" placeholder="hr@company.com" data-required-target></label>
+        </section>
+
+        <section class="form-block two-col" data-field="contact_name"><label>Người liên hệ<span class="required-mark"></span><input name="contact_name" value="{{.DraftMeta.ContactName}}" placeholder="Họ tên người phụ trách" data-required-target></label></section>
+        <section class="form-block two-col" data-field="contact_phone"><label>Số điện thoại liên hệ<span class="required-mark"></span><input type="tel" name="contact_phone" value="{{.DraftMeta.ContactPhone}}" placeholder="Ví dụ: 09xx xxx xxx" data-required-target></label></section>
+        <section class="form-block two-col" data-field="organization"><label>Đơn vị / tổ chức<span class="required-mark"></span><input name="organization" value="{{.DraftMeta.Organization}}" placeholder="Tên trường, CLB, công ty..." data-required-target></label></section>
+        <section class="form-block two-col" data-field="location"><label>Địa điểm<span class="required-mark"></span><input name="location" value="{{.DraftMeta.Location}}" placeholder="Địa chỉ hoặc khu vực" data-required-target></label></section>
+        <section class="form-block two-col" data-field="salary_range"><label>Mức lương / hỗ trợ<span class="required-mark"></span><input name="salary_range" value="{{.DraftMeta.SalaryRange}}" placeholder="Ví dụ: 25.000đ/giờ hoặc 3–5 triệu" data-required-target></label></section>
+        <section class="form-block two-col" data-field="application_link"><label>Liên kết đăng ký / ứng tuyển<span class="required-mark"></span><input type="url" name="application_link" value="{{.DraftMeta.ApplicationLink}}" placeholder="https://..." data-required-target></label></section>
+        <section class="form-block two-col" data-field="event_time"><label>Thời gian diễn ra<span class="required-mark"></span><input name="event_time" value="{{.DraftMeta.EventTime}}" placeholder="Ví dụ: 08:00 · 15/09/2026" data-required-target></label></section>
+        <section class="form-block two-col" data-field="audience"><label>Đối tượng tham gia<span class="required-mark"></span><input name="audience" value="{{.DraftMeta.Audience}}" placeholder="Ví dụ: Sinh viên toàn trường" data-required-target></label></section>
+        <section class="form-block two-col" data-field="tags"><label>Từ khóa / thẻ<span class="required-mark"></span><input name="tags" value="{{.DraftMeta.Tags}}" placeholder="Ví dụ: học bổng, CNTT, Đà Lạt" data-required-target></label></section>
+        <section class="form-block two-col" data-field="source"><label>Nguồn thông tin<span class="required-mark"></span><input name="source" value="{{.DraftMeta.Source}}" placeholder="Tên đơn vị hoặc nguồn tham khảo" data-required-target></label></section>
+
+        <section class="form-block two-col document-field" data-field="document_file"><label>File tài liệu học tập<span class="required-mark"></span><input type="file" name="document_file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip" data-document-input data-required-target data-existing="{{.DraftMeta.DocumentFile}}"><small><span data-document-format-hint>Định dạng do chuyên mục cho phép</span> · tối đa 16 MB{{if .DraftMeta.DocumentFile}} · Đã có file tài liệu{{end}}</small><div class="document-upload-actions"><button type="button" class="document-preview-btn" id="previewDocumentBtn" hidden><img src="/web/icons/eye.svg?v=2.0.0" alt=""> Xem trước tài liệu</button><span class="document-file-name" id="documentFileName"></span></div></label></section>
+        <section class="form-block two-col" data-field="school"><label>Trường học<span class="required-mark"></span><input name="school" value="{{.DraftMeta.School}}" placeholder="Ví dụ: Đại học Đà Lạt" data-required-target></label></section>
+        <section class="form-block two-col" data-field="document_type"><label>Loại tài liệu<span class="required-mark"></span><input name="document_type" value="{{.DraftMeta.DocumentType}}" placeholder="Ví dụ: Bài giảng, Giáo trình, Đề thi..." data-required-target list="default-document-types"><datalist id="default-document-types"><option value="Bài giảng"><option value="Giáo trình"><option value="Đề thi"><option value="Bài tập"><option value="Báo cáo"><option value="Tài liệu tham khảo"></datalist></label></section>
+        <section class="form-block two-col" data-field="subject"><label>Môn học<span class="required-mark"></span><input name="subject" value="{{.DraftMeta.Subject}}" placeholder="Ví dụ: Cơ sở dữ liệu" data-required-target></label></section>
+        <section class="form-block two-col" data-field="academic_year"><label>Niên khóa<span class="required-mark"></span><input name="academic_year" value="{{.DraftMeta.AcademicYear}}" placeholder="Ví dụ: 2025–2026" data-required-target></label></section>
+
+        <section class="form-block positions-block" data-field="positions">
+          <div class="positions-head"><div><label>Các vị trí tuyển<span class="required-mark"></span></label><small>Có thể thêm nhiều vị trí trong cùng một bài tuyển dụng.</small></div><button type="button" class="add-position" id="addPosition">+ Thêm vị trí khác</button></div>
+          <div id="positionsList">
+            {{if .DraftMeta.Positions}}{{range .DraftMeta.Positions}}
+            <div class="position-card">
+              <div class="position-title"><div class="position-title-copy"><span class="position-title-kicker">Tiêu đề hiển thị</span><input class="position-label-input" name="position_label[]" value="{{.Label}}" placeholder="Vị trí tuyển dụng số 1"></div><button type="button" class="remove-position">Xóa vị trí này</button></div>
+              <label>Tên vị trí tuyển dụng <b>*</b><input name="position_name[]" value="{{.Name}}" placeholder="Ví dụ: Thực tập sinh Marketing Part-time"></label>
+              <div class="position-grid"><input name="position_job_type[]" value="{{.JobType}}" placeholder="Tính chất công việc"><input name="position_specialty[]" value="{{.Specialty}}" placeholder="Chuyên môn"><input name="position_location[]" value="{{.Location}}" placeholder="Địa điểm"><input name="position_salary[]" value="{{.Salary}}" placeholder="Mức lương"><input name="position_experience[]" value="{{.Experience}}" placeholder="Kinh nghiệm"></div>
+              <label>Mô tả công việc<div class="mini-editor"><textarea name="position_description[]" rows="5">{{.Description}}</textarea></div></label>
+              <label>Yêu cầu ứng viên<div class="mini-editor"><textarea name="position_requirement[]" rows="5">{{.Requirement}}</textarea></div></label>
+              <label>Chính sách đãi ngộ<div class="mini-editor"><textarea name="position_benefit[]" rows="5">{{.Benefit}}</textarea></div></label>
+            </div>{{end}}{{else}}
+            <div class="position-card">
+              <div class="position-title"><div class="position-title-copy"><span class="position-title-kicker">Tiêu đề hiển thị</span><input class="position-label-input" name="position_label[]" placeholder="Vị trí tuyển dụng số 1"></div><button type="button" class="remove-position">Xóa vị trí này</button></div>
+              <label>Tên vị trí tuyển dụng <b>*</b><input name="position_name[]" placeholder="Ví dụ: Thực tập sinh Marketing Part-time"></label>
+              <div class="position-grid"><input name="position_job_type[]" placeholder="Tính chất công việc"><input name="position_specialty[]" placeholder="Chuyên môn"><input name="position_location[]" placeholder="Địa điểm"><input name="position_salary[]" placeholder="Mức lương"><input name="position_experience[]" placeholder="Kinh nghiệm"></div>
+              <label>Mô tả công việc<div class="mini-editor"><textarea name="position_description[]" rows="5"></textarea></div></label>
+              <label>Yêu cầu ứng viên<div class="mini-editor"><textarea name="position_requirement[]" rows="5"></textarea></div></label>
+              <label>Chính sách đãi ngộ<div class="mini-editor"><textarea name="position_benefit[]" rows="5"></textarea></div></label>
+            </div>{{end}}
+          </div>
+        </section>
+      </div>
+
+      <div class="actions"><a href="{{if .IsEditing}}/bai-viet/{{.EditPostID}}{{else}}/{{end}}">Hủy</a>{{if not .IsEditing}}<button type="submit" class="save-draft-btn" name="action" value="save_draft" formnovalidate><img src="/web/icons/bookmark.svg?v=2.0.0" alt=""> LƯU RIÊNG</button>{{end}}<button type="submit" class="publish-btn" name="action" value="publish">{{if .IsEditing}}LƯU THAY ĐỔI{{else}}ĐĂNG BÀI{{end}}</button></div>
+    </form>
+  </section>
+</main>
+<div class="preview-modal" id="postPreviewModal" hidden>
+  <div class="preview-backdrop" data-close-preview></div>
+  <div class="preview-dialog" role="dialog" aria-modal="true" aria-labelledby="previewTitle">
+    <div class="preview-head"><div><small>XEM TRƯỚC BÀI VIẾT</small><h2 id="previewTitle">Bản xem trước</h2></div><button type="button" data-close-preview aria-label="Đóng"><img src="/web/icons/x.svg?v=2.0.0" alt=""></button></div>
+    <div class="preview-body">
+      <span class="preview-category" id="previewCategory">Chưa chọn chuyên mục</span>
+      <h1 id="previewPostTitle">Tiêu đề bài viết</h1>
+      <div class="preview-image" id="previewImage" data-existing-image="{{.DraftMeta.ImageURL}}"><span>Ảnh bài viết sẽ hiển thị tại đây</span></div>
+      <div class="preview-content" id="previewContent">Nội dung bài viết sẽ hiển thị tại đây.</div>
+      <div class="preview-extra" id="previewExtra"></div>
+    </div>
+  </div>
+</div>
+
+<div class="preview-modal document-preview-modal" id="documentPreviewModal" hidden>
+  <div class="preview-backdrop" data-close-document-preview></div>
+  <div class="preview-dialog document-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="documentPreviewTitle">
+    <div class="preview-head"><div><small>XEM TRƯỚC TÀI LIỆU</small><h2 id="documentPreviewTitle">Bản xem trước tài liệu</h2></div><button type="button" data-close-document-preview aria-label="Đóng"><img src="/web/icons/x.svg?v=2.0.0" alt=""></button></div>
+    <div class="document-preview-meta"><span id="documentPreviewType">TÀI LIỆU</span><strong id="documentPreviewName">Chưa chọn file</strong></div>
+    <div class="document-preview-stage" id="documentPreviewStage"><div class="document-preview-empty">Chọn một file tài liệu để xem trước.</div></div>
+  </div>
+</div>
+<template id="positionTemplate"><div class="position-card"><div class="position-title"><div class="position-title-copy"><span class="position-title-kicker">Tiêu đề hiển thị</span><input class="position-label-input" name="position_label[]" placeholder="Vị trí tuyển dụng số 1"></div><button type="button" class="remove-position">Xóa vị trí này</button></div><label>Tên vị trí tuyển dụng <b>*</b><input name="position_name[]" placeholder="Ví dụ: Thực tập sinh Marketing Part-time"></label><div class="position-grid"><input name="position_job_type[]" placeholder="Tính chất công việc"><input name="position_specialty[]" placeholder="Chuyên môn"><input name="position_location[]" placeholder="Địa điểm"><input name="position_salary[]" placeholder="Mức lương"><input name="position_experience[]" placeholder="Kinh nghiệm"></div><label>Mô tả công việc<div class="mini-editor"><textarea name="position_description[]" rows="5"></textarea></div></label><label>Yêu cầu ứng viên<div class="mini-editor"><textarea name="position_requirement[]" rows="5"></textarea></div></label><label>Chính sách đãi ngộ<div class="mini-editor"><textarea name="position_benefit[]" rows="5"></textarea></div></label></div></template>
+
+<script src="/web/submit/submit.js?v=2.0.0"></script>
+<script src="/web/shared/header.js?v=2.0.0"></script>
+</body></html>{{end}}

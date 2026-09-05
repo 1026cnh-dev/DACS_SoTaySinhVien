@@ -1,0 +1,136 @@
+{{define "login.html"}}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{.Title}} | Sổ tay sinh viên</title>
+  <link rel="stylesheet" href="/web/login/login.css?v=2.0.0">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="auth-mode-{{.AuthMode}}">
+<main class="auth-page">
+  <div class="auth-bg" aria-hidden="true">
+    <img class="bg-tower" src="/web/icons/dalat-tower.svg?v=2.0.0" alt="">
+    <img class="bg-pine bg-pine-left" src="/web/icons/dalat-pine.svg?v=2.0.0" alt="">
+    <img class="bg-pine bg-pine-right" src="/web/icons/dalat-pine.svg?v=2.0.0" alt="">
+    <img class="bg-grape" src="/web/icons/dalat-grape.svg?v=2.0.0" alt="">
+    <span class="bg-orb orb-one"></span>
+    <span class="bg-orb orb-two"></span>
+  </div>
+
+  <section class="auth-panel" aria-label="Tài khoản Sổ tay sinh viên">
+    <div class="auth-card">
+      <div class="card-shine" aria-hidden="true"></div>
+      <a class="card-logo" href="/" aria-label="Về trang chủ">
+        <span class="logo-halo" aria-hidden="true"></span>
+        <img src="/web/icons/logo.webp?v=2.0.0" alt="Logo Sổ tay sinh viên Đà Lạt" decoding="async" fetchpriority="high" width="256" height="256">
+      </a>
+
+      <div class="auth-stage">
+        <section class="auth-view auth-view-login" data-auth-view="login" aria-hidden="{{if eq .AuthMode "register"}}true{{else}}false{{end}}">
+          <div class="auth-heading">
+            <span class="auth-kicker">CHÀO MỪNG TRỞ LẠI</span>
+            <h2>Đăng nhập</h2>
+            <div class="auth-tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký">
+              <span class="tab-slider" aria-hidden="true"></span>
+              <a class="auth-tab auth-tab-login {{if ne .AuthMode "register"}}active{{end}}" href="/login{{if .Query}}?next={{.Query}}{{end}}" data-auth-mode="login" role="tab" aria-selected="{{if ne .AuthMode "register"}}true{{else}}false{{end}}">Đăng nhập</a>
+              <a class="auth-tab auth-tab-register {{if eq .AuthMode "register"}}active{{end}}" href="/register{{if .Query}}?next={{.Query}}{{end}}" data-auth-mode="register" role="tab" aria-selected="{{if eq .AuthMode "register"}}true{{else}}false{{end}}">Đăng ký</a>
+            </div>
+            <p>Truy cập tài khoản để tiếp tục sử dụng Sổ tay sinh viên.</p>
+          </div>
+
+          {{if ne .AuthMode "register"}}{{if .Message}}<div class="alert">{{.Message}}</div>{{end}}{{end}}
+
+          <form method="post" action="/login" autocomplete="on" class="auth-form login-form">
+            <input type="hidden" name="next" value="{{.Query}}">
+            <label class="sr-only" for="login">Số điện thoại hoặc tài khoản quản trị</label>
+            <div class="input-wrap large phone-login-wrap">
+              <img src="/web/icons/user-round.svg?v=2.0.0" alt="">
+              <input id="login" name="login" type="text" inputmode="tel" placeholder="Số điện thoại hoặc tài khoản quản trị" autocomplete="username" required {{if ne .AuthMode "register"}}autofocus{{end}}>
+            </div>
+            <div id="phoneLoginStatus" class="phone-account-status login-phone-status" aria-live="polite" hidden></div>
+
+            <label class="sr-only" for="loginPassword">Mật khẩu</label>
+            <div class="input-wrap large">
+              <img src="/web/icons/lock-keyhole.svg?v=2.0.0" alt="">
+              <input id="loginPassword" name="password" type="password" placeholder="Mật khẩu" autocomplete="current-password" required>
+              <button type="button" class="password-toggle" data-password-target="loginPassword" aria-label="Hiện mật khẩu"><img src="/web/icons/eye.svg?v=2.0.0" alt=""></button>
+            </div>
+
+            <div class="form-options">
+              <label class="remember"><input type="checkbox" name="remember" value="1"><span>Ghi nhớ đăng nhập</span></label>
+            </div>
+
+            <button class="submit-btn" type="submit"><img src="/web/icons/log-in.svg?v=2.0.0" alt="">Đăng nhập</button>
+          </form>
+        </section>
+
+        <section class="auth-view auth-view-register" data-auth-view="register" aria-hidden="{{if eq .AuthMode "register"}}false{{else}}true{{end}}">
+          <div class="auth-heading">
+            <span class="auth-kicker">THÀNH VIÊN MỚI</span>
+            <h2>Tạo tài khoản</h2>
+            <div class="auth-tabs" role="tablist" aria-label="Đăng nhập hoặc đăng ký">
+              <span class="tab-slider" aria-hidden="true"></span>
+              <a class="auth-tab auth-tab-login {{if ne .AuthMode "register"}}active{{end}}" href="/login{{if .Query}}?next={{.Query}}{{end}}" data-auth-mode="login" role="tab" aria-selected="{{if ne .AuthMode "register"}}true{{else}}false{{end}}">Đăng nhập</a>
+              <a class="auth-tab auth-tab-register {{if eq .AuthMode "register"}}active{{end}}" href="/register{{if .Query}}?next={{.Query}}{{end}}" data-auth-mode="register" role="tab" aria-selected="{{if eq .AuthMode "register"}}true{{else}}false{{end}}">Đăng ký</a>
+            </div>
+          </div>
+
+          {{if eq .AuthMode "register"}}{{if .Message}}<div class="alert">{{.Message}}</div>{{end}}{{end}}
+
+          <form method="post" action="/register" autocomplete="on" class="auth-form register-form">
+            <input type="hidden" name="next" value="{{.Query}}">
+
+            <div class="field-group">
+              <label for="phone">Số điện thoại</label>
+              <div class="input-wrap phone-input-wrap">
+                <span class="phone-prefix">+84</span>
+                <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="0912 345 678" maxlength="14" required>
+              </div>
+              <div id="phoneAccountStatus" class="phone-account-status" aria-live="polite" hidden></div>
+            </div>
+
+            <div class="field-group">
+              <label for="registerPassword">Mật khẩu</label>
+              <div class="input-wrap">
+                <img src="/web/icons/lock-keyhole.svg?v=2.0.0" alt="">
+                <input id="registerPassword" name="password" type="password" placeholder="Tối thiểu 6 ký tự" autocomplete="new-password" required>
+                <button type="button" class="password-toggle" data-password-target="registerPassword" aria-label="Hiện mật khẩu"><img src="/web/icons/eye.svg?v=2.0.0" alt=""></button>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="confirm_password">Xác nhận mật khẩu</label>
+              <div class="input-wrap">
+                <img src="/web/icons/lock-keyhole.svg?v=2.0.0" alt="">
+                <input id="confirm_password" name="confirm_password" type="password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required>
+                <button type="button" class="password-toggle" data-password-target="confirm_password" aria-label="Hiện mật khẩu xác nhận"><img src="/web/icons/eye.svg?v=2.0.0" alt=""></button>
+              </div>
+            </div>
+
+            <button class="submit-btn" type="submit"><img src="/web/icons/log-in.svg?v=2.0.0" alt="">Tạo tài khoản</button>
+          </form>
+        </section>
+      </div>
+
+      <div class="auth-common">
+        <div class="divider"><span>hoặc tiếp tục với</span></div>
+
+        <div class="google-wrap" id="googleWrap" data-next="{{.Query}}">
+          <div id="g_id_onload" data-client_id="{{.GoogleClientID}}" data-callback="handleGoogleCredential" data-auto_prompt="false"></div>
+          <div class="g_id_signin" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="continue_with" data-size="large" data-logo_alignment="left" data-width="368"></div>
+          <div id="googleError" class="google-error" hidden></div>
+        </div>
+
+
+        <a class="back-home" href="/"><img src="/web/icons/arrow-left.svg?v=2.0.0" alt="">Quay lại trang chủ</a>
+      </div>
+    </div>
+
+  </section>
+</main>
+<script src="/web/login/login.js?v=2.0.0"></script>
+</body>
+</html>
+{{end}}

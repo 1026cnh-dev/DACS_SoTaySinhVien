@@ -1,0 +1,198 @@
+{{define "home.html"}}<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/web/home/home.css?v=2.1.0">
+  <link rel="stylesheet" href="/web/shared/header.css?v=2.1.0">
+</head>
+<body>
+{{template "site_header" .}}
+
+<main>
+  <section class="portal-hero" id="noi-dung">
+    <div class="wide-shell portal-grid">
+      <div class="portal-panel">
+        <span class="section-kicker">Cổng thông tin</span>
+        {{if eq .Category "hoc-tap"}}
+          <h1>Học tập</h1><p>Tài liệu, hướng dẫn học vụ, đăng ký học phần và kinh nghiệm học tập dành cho sinh viên.</p>
+        {{else if eq .Category "hoc-bong"}}
+          <h1>Học bổng</h1><p>Tổng hợp học bổng trong và ngoài trường, điều kiện ứng tuyển và kinh nghiệm chuẩn bị hồ sơ.</p>
+        {{else if eq .Category "su-kien"}}
+          <h1>Sự kiện</h1><p>Cập nhật hội thảo, hoạt động ngoại khóa, câu lạc bộ và sự kiện dành cho sinh viên.</p>
+        {{else if eq .Category "ky-nang"}}
+          <h1>Kỹ năng</h1><p>Phát triển kỹ năng học tập, giao tiếp, quản lý thời gian và chuẩn bị cho môi trường làm việc.</p>
+        {{else if eq .Category "viec-lam"}}
+          <h1>Việc làm</h1><p>Cơ hội việc làm, thực tập, việc làm bán thời gian và hướng dẫn chuẩn bị CV dành cho sinh viên.</p>
+        {{else if eq .Category "thong-bao"}}
+          <h1>Thông báo</h1><p>Các thông tin quan trọng về học vụ, lịch học, quy định và hoạt động từ nhà trường.</p>
+        {{else if eq .Category "confession"}}
+          <h1>Confession</h1><p>Không gian chia sẻ dành riêng cho sinh viên cùng trường. Bài viết chỉ hiển thị trong cộng đồng trường của bạn.</p>
+        {{else}}
+          <h1>Sổ tay sinh viên</h1><p>Một nơi để tìm kiếm nhanh thông tin học tập, học bổng, sự kiện, kỹ năng, việc làm và thông báo.</p>
+        {{end}}
+
+        <form class="hero-search" method="get" action="/">
+          {{if .Category}}<input type="hidden" name="category" value="{{.Category}}">{{end}}
+          <input name="q" value="{{.Query}}" placeholder="Nhập từ khóa bạn muốn tìm...">
+          <button type="submit" aria-label="Tìm kiếm"><img src="/web/icons/search.svg?v=2.1.0" alt=""><span>TÌM KIẾM</span></button>
+        </form>
+
+        <form class="filter-row" data-smart-filter-row data-category="{{.Category}}" method="get" action="/">
+          {{if .Category}}<input type="hidden" name="category" value="{{.Category}}">{{end}}
+          {{if .Query}}<input type="hidden" name="q" value="{{.Query}}">{{end}}
+          {{range .FilterGroups}}{{$g := .}}
+            <select name="f_{{.Key}}" data-dynamic-filter aria-label="Lọc theo {{.Label}}">
+              <option value="">{{.Label}}</option>
+              {{range .Options}}<option value="{{.Value}}" {{if eq $g.Selected .Value}}selected{{end}}>{{.Value}}{{if gt .Count 1}} ({{.Count}}){{end}}</option>{{end}}
+            </select>
+          {{end}}
+        </form>
+      </div>
+
+      {{if .HomeAds}}
+      <div class="hero-ad-rotator" data-home-ad-rotator data-interval="5000" aria-label="Quảng cáo trang chủ">
+        {{range $index,$ad := .HomeAds}}
+        <a class="hero-ad-card hero-ad-slide {{if eq $index 0}}is-active{{end}}" data-ad-slide data-ad-id="{{$ad.ID}}" href="{{if $ad.LinkURL}}{{$ad.LinkURL}}{{else}}#{{end}}" {{if $ad.LinkURL}}target="_blank" rel="noopener sponsored"{{end}} aria-hidden="{{if eq $index 0}}false{{else}}true{{end}}" tabindex="{{if eq $index 0}}0{{else}}-1{{end}}">
+          {{if $ad.ImageURL}}<img class="managed-ad-image" src="{{$ad.ImageURL}}" alt="{{$ad.Title}}" decoding="async" {{if eq $index 0}}fetchpriority="high"{{else}}loading="lazy" fetchpriority="low"{{end}}>{{else}}<div class="hero-ad-fallback"><span>QUẢNG CÁO</span>{{if $ad.Title}}<strong>{{$ad.Title}}</strong>{{end}}{{if $ad.Description}}<p>{{$ad.Description}}</p>{{end}}</div>{{end}}
+          <span class="hero-ad-badge">QUẢNG CÁO</span>
+          {{if or $ad.Title $ad.Description}}<div class="hero-ad-caption">{{if $ad.Title}}<strong>{{$ad.Title}}</strong>{{end}}{{if $ad.Description}}<p>{{$ad.Description}}</p>{{end}}</div>{{end}}
+        </a>
+        {{end}}
+        {{if gt (len .HomeAds) 1}}<div class="hero-ad-dots" aria-hidden="true">{{range $index,$ad := .HomeAds}}<span class="hero-ad-dot {{if eq $index 0}}is-active{{end}}" data-ad-dot></span>{{end}}</div>{{end}}
+      </div>
+      {{else}}
+      <div class="hero-art {{if .Category}}{{.Category}}{{else}}home{{end}}">
+        <div class="art-orbit orbit-one"></div><div class="art-orbit orbit-two"></div>
+        <div class="art-card art-a"></div><div class="art-card art-b"></div><div class="art-card art-c"></div>
+        <div class="art-icon">{{if eq .Category "hoc-tap"}}📚{{else if eq .Category "hoc-bong"}}🎓{{else if eq .Category "su-kien"}}📅{{else if eq .Category "ky-nang"}}💡{{else if eq .Category "viec-lam"}}💼{{else if eq .Category "thong-bao"}}📣{{else if eq .Category "confession"}}💬{{else}}🧭{{end}}</div>
+        <span class="art-label">VỊ TRÍ QUẢNG CÁO</span>
+      </div>
+      {{end}}
+    </div>
+  </section>
+
+  
+  <section class="wide-shell editorial-feed" id="feed-4-cot">
+    <div class="four-column-board {{if .IsDocumentCategory}}document-category-board{{end}} {{if .Category}}category-focused-board{{end}} {{if .CategoryAccessBlocked}}category-access-board{{end}}">
+      {{if .CategoryAccessBlocked}}
+      <section class="category-access-gate" aria-live="polite">
+        <div class="category-access-icon" aria-hidden="true"><img src="/web/icons/lock-keyhole.svg?v=2.1.0" width="20" height="20" alt=""></div>
+        <div class="category-access-copy">
+          <span>NỘI DUNG GIỚI HẠN</span>
+          {{if .IsLoggedIn}}<h2>Cập nhật hồ sơ để xem bài viết</h2>{{else}}<h2>Đăng nhập để xem bài viết</h2>{{end}}
+          <p>{{.CategoryAccessMessage}}</p>
+        </div>
+        <div class="category-access-actions">
+          <a class="category-access-primary" href="{{.CategoryAccessURL}}">{{.CategoryAccessAction}}</a>
+          <a class="category-access-secondary" href="/">Về trang chủ</a>
+        </div>
+      </section>
+      {{else}}
+      <aside class="feed-column sponsored-column">
+        <div class="stack-list pinned-list" data-ad-feed="pinned">
+          {{range .Pinned}}
+          <article class="compact-feed-card pinned-card clickable-post-card smart-filter-card" data-post-url="/bai-viet/{{.Post.ID}}" data-score="{{.Stats.Score}}" data-comments="{{.Stats.Comments}}" data-has-image="{{if .Meta.ImageURL}}1{{else}}0{{end}}" data-pinned="1" data-date="{{dateVN .Post.CreatedAt}}" data-deadline="{{.Meta.Deadline}}" data-category="{{.Post.CategorySlug}}">
+            <div class="compact-meta"><span class="pin-badge"><img class="mini-icon" src="/web/icons/pin.svg?v=2.1.0" alt=""> GHIM</span><span>@{{.Post.CategoryName}}</span></div>
+            <div class="pinned-author-row"><div class="card-author-area" data-card-no-nav>{{if .Author}}<a class="card-author-link" href="/nguoi-dung/{{.Author.ID}}"><span class="daily-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="Ảnh đại diện" loading="lazy" decoding="async">{{else}}{{slice .Author.Name 0 1}}{{end}}</span><div><strong class="verified-name">{{.Author.Name}}{{if .Author.IsVerified}}<span class="mini-verified-badge" title="Tài khoản uy tín"><img src="/web/icons/check.svg?v=2.1.0" alt=""></span>{{end}}{{if eq .Author.VerificationType "student"}}<span class="mini-role-badge student" title="Sinh viên"><img src="/web/icons/graduation-cap.svg?v=2.1.0" alt=""></span>{{else if eq .Author.VerificationType "employer"}}<span class="mini-role-badge employer" title="Nhà tuyển dụng"><img src="/web/icons/briefcase-business.svg?v=2.1.0" alt=""></span>{{else if eq .Author.VerificationType "landlord"}}<span class="mini-role-badge landlord" title="Chủ trọ"><img src="/web/icons/house.svg?v=2.1.0" alt=""></span>{{end}}</strong><small>{{dateVN .Post.CreatedAt}}</small></div></a>{{else}}<div class="card-author-link"><span class="daily-avatar">{{slice .Post.CategoryName 0 1}}</span><div><strong>Sổ tay sinh viên</strong><small>{{dateVN .Post.CreatedAt}}</small></div></div>{{end}}</div></div>
+            <h4><a href="/bai-viet/{{.Post.ID}}">{{.Post.Title}}</a></h4>
+            <p class="card-content-preview" data-card-preview><span class="card-preview-copy">{{.Post.Content}}</span><a class="card-preview-more" href="/bai-viet/{{.Post.ID}}" data-card-no-nav>Xem thêm</a></p>
+            {{if .Meta.ImageURL}}<a class="compact-card-image" href="/bai-viet/{{.Post.ID}}"><img src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async"></a>{{end}}
+            <div class="card-footer-actions">
+              <form class="quick-vote" method="post" action="/post/vote">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}"><input type="hidden" name="next" value="{{if $.Category}}/?category={{$.Category}}#feed-4-cot{{else}}/#feed-4-cot{{end}}">
+                <button name="value" value="1" title="Bình chọn tăng"><img src="/web/icons/arrow-up.svg?v=2.1.0" alt="Tăng"></button><b>{{.Stats.Score}}</b><button name="value" value="-1" title="Bình chọn giảm"><img src="/web/icons/arrow-down.svg?v=2.1.0" alt="Giảm"></button>
+              </form>
+              <a class="comment-count" href="/bai-viet/{{.Post.ID}}#comments"><img src="/web/icons/message-circle.svg?v=2.1.0" alt=""> {{.Stats.Comments}}</a>
+              <button type="button" class="save-post-btn {{if .Saved}}saved{{end}}" data-post-id="{{.Post.ID}}" data-next="/" data-card-no-nav title="{{if .Saved}}Bỏ lưu bài viết{{else}}Lưu bài viết{{end}}"><img src="/web/icons/bookmark.svg?v=2.1.0" alt=""><span>{{if .Saved}}Đã lưu{{else}}Lưu{{end}}</span></button>
+            </div>
+          </article>
+          {{else}}
+          {{if not $.FeedAds}}<div class="column-empty">Chưa có bài ghim.</div>{{end}}
+          {{end}}
+        </div>
+      </aside>
+
+      <section class="today-zone">
+        <div class="today-two-columns" data-ad-feed="category-main">
+          {{range .TodayPosts}}
+          <article class="daily-card card-style-{{.CardStyle}} {{.Post.CategorySlug}} {{if not .Meta.ImageURL}}no-image{{end}} clickable-post-card smart-filter-card" data-post-url="/bai-viet/{{.Post.ID}}" data-score="{{.Stats.Score}}" data-comments="{{.Stats.Comments}}" data-has-image="{{if .Meta.ImageURL}}1{{else}}0{{end}}" data-pinned="{{if .Post.IsPinned}}1{{else}}0{{end}}" data-date="{{dateVN .Post.CreatedAt}}" data-deadline="{{.Meta.Deadline}}" data-category="{{.Post.CategorySlug}}">
+            {{if eq .CardStyle "document"}}
+            <div class="document-preview-thumb">
+              {{if .Meta.DocumentFile}}<iframe src="/tai-lieu/xem-truoc/{{.Post.ID}}" title="{{.Post.Title}}" loading="lazy" tabindex="-1"></iframe>{{else if .Meta.ImageURL}}<img src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async">{{else}}<div class="document-preview-fallback"><img src="/web/icons/file-text.svg?v=2.1.0" alt=""><b>TÀI LIỆU</b><span>Chưa có file</span></div>{{end}}
+            </div>
+            <h3 class="document-preview-title"><a href="/bai-viet/{{.Post.ID}}">{{.Post.Title}}</a></h3>
+            <div class="document-card-meta">{{if .Meta.DocumentType}}<span>{{.Meta.DocumentType}}</span>{{end}}{{if .Meta.Subject}}<b>{{.Meta.Subject}}</b>{{end}}{{if .Meta.AcademicYear}}<span>{{.Meta.AcademicYear}}</span>{{end}}</div>
+            {{else}}
+            <div class="daily-head"><div class="card-author-area" data-card-no-nav>{{if .Author}}<a class="card-author-link" href="/nguoi-dung/{{.Author.ID}}"><span class="daily-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="Ảnh đại diện" loading="lazy" decoding="async">{{else}}{{slice .Author.Name 0 1}}{{end}}</span><div><strong class="verified-name">{{.Author.Name}}{{if .Author.IsVerified}}<span class="mini-verified-badge" title="Tài khoản uy tín"><img src="/web/icons/check.svg?v=2.1.0" alt=""></span>{{end}}{{if eq .Author.VerificationType "student"}}<span class="mini-role-badge student" title="Sinh viên"><img src="/web/icons/graduation-cap.svg?v=2.1.0" alt=""></span>{{else if eq .Author.VerificationType "employer"}}<span class="mini-role-badge employer" title="Nhà tuyển dụng"><img src="/web/icons/briefcase-business.svg?v=2.1.0" alt=""></span>{{else if eq .Author.VerificationType "landlord"}}<span class="mini-role-badge landlord" title="Chủ trọ"><img src="/web/icons/house.svg?v=2.1.0" alt=""></span>{{end}}</strong><small>{{dateVN .Post.CreatedAt}}</small></div></a>{{else}}<div class="card-author-link"><span class="daily-avatar">{{slice .Post.CategoryName 0 1}}</span><div><strong>Sổ tay sinh viên</strong><small>{{dateVN .Post.CreatedAt}}</small></div></div>{{end}}</div><span class="daily-category">@{{.Post.CategoryName}}</span></div>
+            <h3><a href="/bai-viet/{{.Post.ID}}">{{.Post.Title}}</a></h3>
+            <p class="card-content-preview" data-card-preview><span class="card-preview-copy">{{.Post.Content}}</span><a class="card-preview-more" href="/bai-viet/{{.Post.ID}}" data-card-no-nav>Xem thêm</a></p>
+            {{if .Meta.ImageURL}}<a class="daily-image" href="/bai-viet/{{.Post.ID}}"><img src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async"></a>{{end}}
+            {{end}}
+            <div class="card-footer-actions">
+              <form class="quick-vote" method="post" action="/post/vote">
+                <input type="hidden" name="post_id" value="{{.Post.ID}}"><input type="hidden" name="next" value="{{if $.Category}}/?category={{$.Category}}#feed-4-cot{{else}}/#feed-4-cot{{end}}">
+                <button name="value" value="1" title="Bình chọn tăng"><img src="/web/icons/arrow-up.svg?v=2.1.0" alt="Tăng"></button><b>{{.Stats.Score}}</b><button name="value" value="-1" title="Bình chọn giảm"><img src="/web/icons/arrow-down.svg?v=2.1.0" alt="Giảm"></button>
+              </form>
+              <a class="comment-count" href="/bai-viet/{{.Post.ID}}#comments"><img src="/web/icons/message-circle.svg?v=2.1.0" alt=""> {{.Stats.Comments}}</a>
+              <button type="button" class="save-post-btn {{if .Saved}}saved{{end}}" data-post-id="{{.Post.ID}}" data-next="/" data-card-no-nav title="{{if .Saved}}Bỏ lưu bài viết{{else}}Lưu bài viết{{end}}"><img src="/web/icons/bookmark.svg?v=2.1.0" alt=""><span>{{if .Saved}}Đã lưu{{else}}Lưu{{end}}</span></button>
+            </div>
+          </article>
+          {{else}}<div class="column-empty">Chưa có bài viết trong chuyên mục này.</div>{{end}}
+        </div>
+      </section>
+
+      <aside class="feed-column hot-column">
+        <div class="hot-ranking" data-ad-feed="trending">
+          {{range $item := .HotPosts}}
+          <article class="daily-card hot-feed-card card-style-{{$item.CardStyle}} {{$item.Post.CategorySlug}} {{if not $item.Meta.ImageURL}}no-image{{end}} clickable-post-card smart-filter-card" data-post-url="/bai-viet/{{$item.Post.ID}}" data-score="{{$item.Stats.Score}}" data-comments="{{$item.Stats.Comments}}" data-has-image="{{if $item.Meta.ImageURL}}1{{else}}0{{end}}" data-pinned="{{if $item.Post.IsPinned}}1{{else}}0{{end}}" data-date="{{dateVN $item.Post.CreatedAt}}" data-deadline="{{$item.Meta.Deadline}}" data-category="{{$item.Post.CategorySlug}}">
+            {{if eq $item.CardStyle "document"}}
+            <div class="document-preview-thumb">
+              {{if $item.Meta.DocumentFile}}<iframe src="/tai-lieu/xem-truoc/{{$item.Post.ID}}" title="{{$item.Post.Title}}" loading="lazy" tabindex="-1"></iframe>{{else if $item.Meta.ImageURL}}<img src="{{$item.Meta.ImageURL}}" alt="{{$item.Post.Title}}" loading="lazy" decoding="async">{{else}}<div class="document-preview-fallback"><img src="/web/icons/file-text.svg?v=2.1.0" alt=""><b>TÀI LIỆU</b><span>Chưa có file</span></div>{{end}}
+            </div>
+            <h3 class="document-preview-title"><a href="/bai-viet/{{$item.Post.ID}}">{{$item.Post.Title}}</a></h3>
+            <div class="document-card-meta">{{if $item.Meta.DocumentType}}<span>{{$item.Meta.DocumentType}}</span>{{end}}{{if $item.Meta.Subject}}<b>{{$item.Meta.Subject}}</b>{{end}}{{if $item.Meta.AcademicYear}}<span>{{$item.Meta.AcademicYear}}</span>{{end}}</div>
+            {{else}}
+            <div class="daily-head"><div class="card-author-area" data-card-no-nav>{{if $item.Author}}<a class="card-author-link" href="/nguoi-dung/{{$item.Author.ID}}"><span class="daily-avatar">{{if $item.Author.AvatarURL}}<img src="{{$item.Author.AvatarURL}}" alt="Ảnh đại diện" loading="lazy" decoding="async">{{else}}{{slice $item.Author.Name 0 1}}{{end}}</span><div><strong class="verified-name">{{$item.Author.Name}}{{if $item.Author.IsVerified}}<span class="mini-verified-badge" title="Tài khoản uy tín"><img src="/web/icons/check.svg?v=2.1.0" alt=""></span>{{end}}{{if eq $item.Author.VerificationType "student"}}<span class="mini-role-badge student" title="Sinh viên"><img src="/web/icons/graduation-cap.svg?v=2.1.0" alt=""></span>{{else if eq $item.Author.VerificationType "employer"}}<span class="mini-role-badge employer" title="Nhà tuyển dụng"><img src="/web/icons/briefcase-business.svg?v=2.1.0" alt=""></span>{{else if eq $item.Author.VerificationType "landlord"}}<span class="mini-role-badge landlord" title="Chủ trọ"><img src="/web/icons/house.svg?v=2.1.0" alt=""></span>{{end}}</strong><small>{{dateVN $item.Post.CreatedAt}}</small></div></a>{{else}}<div class="card-author-link"><span class="daily-avatar">{{slice $item.Post.CategoryName 0 1}}</span><div><strong>Sổ tay sinh viên</strong><small>{{dateVN $item.Post.CreatedAt}}</small></div></div>{{end}}</div></div>
+            <h3><a href="/bai-viet/{{$item.Post.ID}}">{{$item.Post.Title}}</a></h3>
+            <p class="card-content-preview" data-card-preview><span class="card-preview-copy">{{$item.Post.Content}}</span><a class="card-preview-more" href="/bai-viet/{{$item.Post.ID}}" data-card-no-nav>Xem thêm</a></p>
+            {{if $item.Meta.ImageURL}}<a class="daily-image" href="/bai-viet/{{$item.Post.ID}}"><img src="{{$item.Meta.ImageURL}}" alt="{{$item.Post.Title}}" loading="lazy" decoding="async"></a>{{end}}
+            {{end}}
+            <div class="card-footer-actions">
+              <form class="quick-vote" method="post" action="/post/vote">
+                <input type="hidden" name="post_id" value="{{$item.Post.ID}}"><input type="hidden" name="next" value="{{if $.Category}}/?category={{$.Category}}#feed-4-cot{{else}}/#feed-4-cot{{end}}">
+                <button name="value" value="1" title="Bình chọn tăng"><img src="/web/icons/arrow-up.svg?v=2.1.0" alt="Tăng"></button><b>{{$item.Stats.Score}}</b><button name="value" value="-1" title="Bình chọn giảm"><img src="/web/icons/arrow-down.svg?v=2.1.0" alt="Giảm"></button>
+              </form>
+              <a class="comment-count" href="/bai-viet/{{$item.Post.ID}}#comments"><img src="/web/icons/message-circle.svg?v=2.1.0" alt=""> {{$item.Stats.Comments}}</a>
+              <button type="button" class="save-post-btn {{if $item.Saved}}saved{{end}}" data-post-id="{{$item.Post.ID}}" data-next="/" data-card-no-nav title="{{if $item.Saved}}Bỏ lưu bài viết{{else}}Lưu bài viết{{end}}"><img src="/web/icons/bookmark.svg?v=2.1.0" alt=""><span>{{if $item.Saved}}Đã lưu{{else}}Lưu{{end}}</span></button>
+            </div>
+          </article>
+          {{else}}{{if not $.FeedAds}}<div class="column-empty">Chưa có bài viết nổi bật.</div>{{end}}{{end}}
+        </div>
+      </aside>
+      {{end}}
+    </div>
+
+    {{if .FeedAds}}
+    <div class="feed-ad-template-pool" hidden aria-hidden="true">
+      {{range .FeedAds}}
+      <template class="feed-ad-template" data-ad-id="{{.ID}}">
+        <a class="sponsored-card inline-feed-ad" data-ad-id="{{.ID}}" href="{{if .LinkURL}}{{.LinkURL}}{{else}}#{{end}}" {{if .LinkURL}}target="_blank" rel="noopener sponsored"{{end}} aria-label="Quảng cáo{{if .Title}}: {{.Title}}{{end}}">
+          <div class="sponsored-label">QUẢNG CÁO</div>
+          {{if .Title}}<strong>{{.Title}}</strong>{{end}}
+          {{if .Description}}<p>{{.Description}}</p>{{end}}
+          {{if .ImageURL}}<img class="managed-ad-image" src="{{.ImageURL}}" alt="{{.Title}}" loading="lazy" decoding="async" fetchpriority="low">{{else if not .Title}}<div class="ad-placeholder">AD</div>{{end}}
+        </a>
+      </template>
+      {{end}}
+    </div>
+    {{end}}
+  </section>
+
+  
+</main>
+
+<script src="/web/home/home.js?v=2.1.0"></script>
+<script src="/web/shared/header.js?v=2.1.0"></script>
+</body></html>{{end}}

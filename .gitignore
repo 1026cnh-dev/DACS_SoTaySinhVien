@@ -1,0 +1,32 @@
+# Secrets
+.session_secret
+.env
+.env.*
+!.env.example
+
+# Local databases must not be committed to a public GitHub repository
+*.db
+*.db-wal
+*.db-shm
+
+# Runtime uploads/cache (production uploads go to Supabase Storage)
+uploads/*
+!uploads/.gitkeep
+
+# Build output
+sotaysinhvien
+app
+bin/
+
+# OS / editor
+.DS_Store
+__MACOSX/
+.vscode/
+.idea/
+
+# Runtime config files containing real production secrets
+config/*.secret.env
+config/production.private.env
+config/local.private.env
+.env.local
+.env.production

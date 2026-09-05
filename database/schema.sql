@@ -1,0 +1,158 @@
+PRAGMA foreign_keys = ON;
+CREATE TABLE IF NOT EXISTS categories (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  slug TEXT NOT NULL UNIQUE,
+  form_config TEXT NOT NULL DEFAULT '[]',
+  show_company_card INTEGER NOT NULL DEFAULT 0,
+  company_card_style TEXT NOT NULL DEFAULT 'full',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  audience_scope TEXT NOT NULL DEFAULT 'public',
+  post_card_style TEXT NOT NULL DEFAULT 'normal',
+    document_formats TEXT NOT NULL DEFAULT 'pdf,doc,docx,xls,xlsx,ppt,pptx,txt,zip'
+);
+CREATE TABLE IF NOT EXISTS posts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  summary TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  category_id INTEGER NOT NULL,
+  meta_json TEXT NOT NULL DEFAULT '{}',
+  author_id INTEGER NOT NULL DEFAULT 0,
+  is_pinned INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE RESTRICT
+);
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL UNIQUE,
+  username TEXT UNIQUE,
+  password_hash TEXT NOT NULL DEFAULT '',
+  provider TEXT NOT NULL DEFAULT 'local',
+  google_sub TEXT UNIQUE,
+  avatar_url TEXT NOT NULL DEFAULT '',
+  is_admin INTEGER NOT NULL DEFAULT 0,
+  is_verified INTEGER NOT NULL DEFAULT 0,
+  verification_type TEXT NOT NULL DEFAULT '',
+  profile_role TEXT NOT NULL DEFAULT '',
+  school TEXT NOT NULL DEFAULT '',
+  major TEXT NOT NULL DEFAULT '',
+  student_id TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '',
+  phone_verified INTEGER NOT NULL DEFAULT 0,
+  employer_company TEXT NOT NULL DEFAULT '',
+  employer_tax_code TEXT NOT NULL DEFAULT '',
+  employer_representative TEXT NOT NULL DEFAULT '',
+  employer_website TEXT NOT NULL DEFAULT '',
+  landlord_name TEXT NOT NULL DEFAULT '',
+  landlord_address TEXT NOT NULL DEFAULT '',
+  landlord_phone TEXT NOT NULL DEFAULT '',
+  landlord_legal_info TEXT NOT NULL DEFAULT '',
+  account_status TEXT NOT NULL DEFAULT 'active',
+  locked_until TEXT NOT NULL DEFAULT '',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS post_votes (
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  value INTEGER NOT NULL CHECK(value IN(-1,1)),
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(post_id,user_id),
+  FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+CREATE TABLE IF NOT EXISTS comments (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  parent_id INTEGER NOT NULL DEFAULT 0,
+  user_id INTEGER NOT NULL,
+  content TEXT NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS filter_values (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ category_id INTEGER NOT NULL,
+ field_key TEXT NOT NULL,
+ value TEXT NOT NULL,
+ normalized_value TEXT NOT NULL,
+ status TEXT NOT NULL DEFAULT 'pending',
+ usage_count INTEGER NOT NULL DEFAULT 1,
+ created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ UNIQUE(category_id, field_key, normalized_value),
+ FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS idx_filter_values_lookup ON filter_values(category_id, field_key, status, usage_count DESC);
+
+CREATE TABLE IF NOT EXISTS advertisements (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  image_url TEXT NOT NULL DEFAULT '',
+  link_url TEXT NOT NULL DEFAULT '',
+  position TEXT NOT NULL,
+  active INTEGER NOT NULL DEFAULT 1,
+  sort_order INTEGER NOT NULL DEFAULT 10,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS drafts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category_id INTEGER NOT NULL DEFAULT 0,
+  title TEXT NOT NULL DEFAULT '',
+  content TEXT NOT NULL DEFAULT '',
+  meta_json TEXT NOT NULL DEFAULT '{}',
+  author_id INTEGER NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(author_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS saved_posts (
+  post_id INTEGER NOT NULL,
+  user_id INTEGER NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(post_id,user_id),
+  FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS post_reports (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  post_id INTEGER NOT NULL,
+  reporter_id INTEGER NOT NULL,
+  reason TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(post_id, reporter_id),
+  FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE,
+  FOREIGN KEY(reporter_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS verification_requests (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  type TEXT NOT NULL,
+  info TEXT NOT NULL DEFAULT '',
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS user_blocks (
+  blocker_id INTEGER NOT NULL,
+  blocked_id INTEGER NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(blocker_id, blocked_id),
+  FOREIGN KEY(blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY(blocked_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_phone_unique ON users(phone) WHERE TRIM(phone) <> '';
+
+CREATE INDEX IF NOT EXISTS idx_posts_created ON posts(created_at DESC, id DESC);

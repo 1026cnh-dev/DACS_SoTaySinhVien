@@ -1,0 +1,102 @@
+{{define "site_category_nav"}}
+<nav class="category-nav shared-category-nav" data-shared-category-nav>
+  <div class="wide-shell nav-bar-inner">
+    <div class="nav-scroll">
+      <a class="{{if and (not .Category) (eq .Title "Sổ tay sinh viên")}}active{{end}}" href="/">Trang chủ</a>
+      {{range .Categories}}<a class="{{if eq $.Category .Slug}}active{{end}}{{if .NavLocked}} category-nav-locked{{end}}" href="/?category={{.Slug}}"{{if .NavLocked}} title="{{.NavAccessHint}}" aria-label="{{.Name}} · Nội dung đang bị giới hạn"{{end}}><span class="category-nav-label">{{.Name}}</span>{{if .NavLocked}}<span class="category-nav-lock" aria-hidden="true"><img src="/web/icons/lock-keyhole.svg?v=2.0.0" alt=""></span>{{end}}</a>{{end}}
+    </div>
+    <div class="nav-quick-actions" aria-label="Thao tác nhanh">
+      <button class="nav-quick-btn" type="button" data-jump-main-search aria-label="Đi tới ô tìm kiếm chính"><img src="/web/icons/search.svg?v=2.0.0" alt=""></button>
+      <a class="nav-quick-btn quick-post" href="/dang-bai" aria-label="Đăng bài"><img src="/web/icons/plus.svg?v=2.0.0" alt=""></a>
+      {{if .IsLoggedIn}}
+      <div class="account-menu nav-quick-account" data-account-menu>
+        <button class="nav-quick-btn" type="button" data-account-trigger aria-label="Tài khoản" aria-expanded="false"><span class="avatar">{{if and .CurrentUser .CurrentUser.AvatarURL}}<img src="{{.CurrentUser.AvatarURL}}" alt="Ảnh đại diện" decoding="async">{{else}}{{if .UserName}}{{slice .UserName 0 1}}{{else}}S{{end}}{{end}}</span></button>
+        <div class="account-dropdown" data-account-dropdown>
+          <div class="account-dropdown-head"><span class="avatar account-avatar-large">{{if and .CurrentUser .CurrentUser.AvatarURL}}<img src="{{.CurrentUser.AvatarURL}}" alt="Ảnh đại diện" decoding="async">{{else}}{{if .UserName}}{{slice .UserName 0 1}}{{else}}S{{end}}{{end}}</span><div><strong>{{if .UserName}}{{.UserName}}{{else}}Sinh viên{{end}}</strong><small>{{if .CurrentUser}}{{.CurrentUser.Email}}{{else}}Sinh viên{{end}}</small></div></div>
+          <a class="account-dropdown-item" href="/ho-so"><img class="ui-icon" src="/web/icons/user-round.svg?v=2.0.0" alt=""> Hồ sơ</a>
+          <a class="account-dropdown-item" href="/bai-da-luu"><img class="ui-icon" src="/web/icons/bookmark.svg?v=2.0.0" alt=""> Bài đã lưu</a>
+          {{if and .CurrentUser .CurrentUser.IsAdmin}}<a class="account-dropdown-item admin-menu-link" href="/admin"><img class="ui-icon" src="/web/icons/shield-check.svg?v=2.0.0" alt=""> Trang quản trị</a>{{end}}
+          <button type="button" class="account-dropdown-item theme-switcher" data-theme-toggle aria-pressed="false"><img class="ui-icon" src="/web/icons/lightbulb.svg?v=2.0.0" alt=""><span data-theme-label>Đổi sang tối</span><span class="theme-pill"><span class="theme-knob"></span></span></button>
+          <a class="account-dropdown-item danger" href="/logout"><img class="ui-icon" src="/web/icons/log-in.svg?v=2.0.0" alt=""> Đăng xuất</a>
+        </div>
+      </div>
+      {{else}}
+      <div class="account-menu nav-quick-account" data-account-menu>
+        <button class="nav-quick-btn" type="button" data-account-trigger aria-label="Tài khoản" aria-expanded="false"><span class="avatar">S</span></button>
+        <div class="account-dropdown" data-account-dropdown>
+          <a class="account-dropdown-item" href="/login"><img class="ui-icon" src="/web/icons/log-in.svg?v=2.0.0" alt=""> Đăng nhập</a>
+          <a class="account-dropdown-item" href="/register"><img class="ui-icon" src="/web/icons/user-round.svg?v=2.0.0" alt=""> Đăng ký</a>
+          <button type="button" class="account-dropdown-item theme-switcher" data-theme-toggle aria-pressed="false"><img class="ui-icon" src="/web/icons/lightbulb.svg?v=2.0.0" alt=""><span data-theme-label>Đổi sang tối</span><span class="theme-pill"><span class="theme-knob"></span></span></button>
+        </div>
+      </div>
+      {{end}}
+    </div>
+  </div>
+</nav>
+{{end}}
+
+{{define "site_header"}}
+<header class="site-header synced-site-header" data-shared-site-header>
+  <div class="masthead wide-shell">
+    <a class="brand" href="/">
+      <img class="brand-logo" src="/web/icons/logo.webp?v=2.0.0" alt="Logo Sổ tay sinh viên" decoding="async" fetchpriority="high" width="256" height="256">
+      <span class="brandtext"><strong>Sổ tay <b>sinh viên</b></strong><small>Thông tin dành cho sinh viên</small></span>
+    </a>
+    <form class="top-search masthead-search" method="get" action="/">
+      {{if .Category}}<input type="hidden" name="category" value="{{.Category}}">{{end}}
+      <input name="q" value="{{.Query}}" placeholder="Tìm kiếm bài viết, học bổng, việc làm..." data-main-search-input>
+      <button type="submit" aria-label="Tìm kiếm"><img class="ui-icon" src="/web/icons/search.svg?v=2.0.0" alt=""></button>
+    </form>
+    <a class="post-btn masthead-post" href="/dang-bai"><img class="ui-icon icon-white" src="/web/icons/plus.svg?v=2.0.0" alt=""> ĐĂNG BÀI</a>
+    {{if .IsLoggedIn}}
+    <div class="account-menu masthead-account-menu" data-account-menu>
+      <button class="account-link masthead-account compact-account" type="button" data-account-trigger aria-expanded="false">
+        <span class="avatar">{{if and .CurrentUser .CurrentUser.AvatarURL}}<img src="{{.CurrentUser.AvatarURL}}" alt="Ảnh đại diện" decoding="async">{{else}}{{if .UserName}}{{slice .UserName 0 1}}{{else}}S{{end}}{{end}}</span>
+        <span class="account-name">Tài khoản</span>
+        <img class="account-caret ui-icon" src="/web/icons/chevron-down.svg?v=2.0.0" alt="">
+      </button>
+      <div class="account-dropdown" data-account-dropdown>
+        <div class="account-dropdown-head">
+          <span class="avatar account-avatar-large">{{if and .CurrentUser .CurrentUser.AvatarURL}}<img src="{{.CurrentUser.AvatarURL}}" alt="Ảnh đại diện" decoding="async">{{else}}{{if .UserName}}{{slice .UserName 0 1}}{{else}}S{{end}}{{end}}</span>
+          <div>
+            <strong>{{if .UserName}}{{.UserName}}{{else}}Sinh viên{{end}}</strong>
+            <small>{{if .CurrentUser}}{{.CurrentUser.Email}}{{else}}Sinh viên{{end}}</small>
+          </div>
+        </div>
+        <a class="account-dropdown-item" href="/ho-so"><img class="ui-icon" src="/web/icons/user-round.svg?v=2.0.0" alt=""> Hồ sơ</a>
+        <a class="account-dropdown-item" href="/bai-da-luu"><img class="ui-icon" src="/web/icons/bookmark.svg?v=2.0.0" alt=""> Bài đã lưu</a>
+        {{if and .CurrentUser .CurrentUser.IsAdmin}}<a class="account-dropdown-item admin-menu-link" href="/admin"><img class="ui-icon" src="/web/icons/shield-check.svg?v=2.0.0" alt=""> Trang quản trị</a>{{end}}
+        <button type="button" class="account-dropdown-item theme-switcher" data-theme-toggle aria-pressed="false">
+          <img class="ui-icon" src="/web/icons/lightbulb.svg?v=2.0.0" alt="">
+          <span data-theme-label>Đổi sang tối</span>
+          <span class="theme-pill"><span class="theme-knob"></span></span>
+        </button>
+        <a class="account-dropdown-item danger" href="/logout"><img class="ui-icon" src="/web/icons/log-in.svg?v=2.0.0" alt=""> Đăng xuất</a>
+      </div>
+    </div>
+    {{else}}
+    <div class="account-menu masthead-account-menu" data-account-menu>
+      <button class="account-link masthead-account compact-account guest-account" type="button" data-account-trigger aria-expanded="false">
+        <span class="avatar">S</span>
+        <span class="account-name">Tài khoản</span>
+        <img class="account-caret ui-icon" src="/web/icons/chevron-down.svg?v=2.0.0" alt="">
+      </button>
+      <div class="account-dropdown" data-account-dropdown>
+        <a class="account-dropdown-item" href="/login"><img class="ui-icon" src="/web/icons/log-in.svg?v=2.0.0" alt=""> Đăng nhập</a>
+        <a class="account-dropdown-item" href="/register"><img class="ui-icon" src="/web/icons/user-round.svg?v=2.0.0" alt=""> Đăng ký</a>
+        <button type="button" class="account-dropdown-item theme-switcher" data-theme-toggle aria-pressed="false">
+          <img class="ui-icon" src="/web/icons/lightbulb.svg?v=2.0.0" alt="">
+          <span data-theme-label>Đổi sang tối</span>
+          <span class="theme-pill"><span class="theme-knob"></span></span>
+        </button>
+      </div>
+    </div>
+    {{end}}
+  </div>
+</header>
+{{template "site_category_nav" .}}
+<a class="mobile-create-fab" href="/dang-bai" aria-label="Đăng bài">
+  <span class="mobile-create-fab-circle"><img src="/web/icons/plus.svg?v=2.0.0" alt=""></span>
+  <span class="mobile-create-fab-label">Đăng bài</span>
+</a>
+{{end}}

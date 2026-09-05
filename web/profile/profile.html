@@ -1,0 +1,171 @@
+{{define "profile.html"}}<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{.Title}} | Sổ tay sinh viên</title>
+  <link rel="stylesheet" href="/web/profile/profile.css?v=2.0.0">
+  <link rel="stylesheet" href="/web/shared/header.css?v=2.0.0">
+</head>
+<body>
+{{template "site_header" .}}
+  <main class="profile-page">
+    <section class="profile-card">
+      <div class="profile-top">
+        <a class="back-link" href="/"><img src="/web/icons/arrow-left.svg?v=2.0.0" alt=""> Trang chủ</a>
+        {{if .IsOwnProfile}}<a class="draft-link" href="/bai-da-luu"><img src="/web/icons/bookmark.svg?v=2.0.0" alt=""> Bài đã lưu</a>{{end}}
+      </div>
+
+      {{if .Message}}<div class="profile-alert">{{.Message}}</div>{{end}}
+
+      <section class="profile-head public-profile-head">
+        <div class="avatar-editor">
+          <div class="profile-avatar" id="avatarPreview">
+            {{if and .ProfileUser .ProfileUser.AvatarURL}}<img src="{{.ProfileUser.AvatarURL}}" alt="Ảnh đại diện" decoding="async">{{else}}<span>{{if .ProfileUser}}{{slice .ProfileUser.Name 0 1}}{{else}}S{{end}}</span>{{end}}
+          </div>
+          {{if .IsOwnProfile}}
+          <label class="avatar-button" for="avatarInput"><img src="/web/icons/plus.svg?v=2.0.0" alt=""> Chọn ảnh đại diện</label>
+          {{end}}
+        </div>
+
+        <div class="profile-intro">
+          <small>{{if .IsOwnProfile}}HỒ SƠ CỦA BẠN{{else}}TRANG CÁ NHÂN{{end}}</small>
+          <h1>{{if .ProfileUser}}{{.ProfileUser.Name}}{{if .ProfileUser.IsVerified}}<span class="verified-badge" title="Tài khoản uy tín"><img src="/web/icons/check.svg?v=2.0.0" alt="Tài khoản uy tín"></span>{{end}}{{if eq .ProfileUser.VerificationType "student"}}<span class="identity-role-badge student" title="Sinh viên"><img src="/web/icons/graduation-cap.svg?v=2.0.0" alt="Sinh viên"></span>{{else if eq .ProfileUser.VerificationType "employer"}}<span class="identity-role-badge employer" title="Nhà tuyển dụng"><img src="/web/icons/briefcase-business.svg?v=2.0.0" alt="Nhà tuyển dụng"></span>{{else if eq .ProfileUser.VerificationType "landlord"}}<span class="identity-role-badge landlord" title="Chủ trọ"><img src="/web/icons/house.svg?v=2.0.0" alt="Chủ trọ"></span>{{end}}{{else}}Sinh viên{{end}}</h1>
+          {{if .ProfileUser}}
+          <div class="profile-identity-line">
+            {{if .ProfileUser.Phone}}<span class="profile-contact-chip">{{.ProfileUser.Phone}}</span>{{end}}
+            {{if ne .ProfileUser.Provider "phone"}}<span class="profile-contact-chip profile-email-chip">{{.ProfileUser.Email}}</span>{{end}}
+            <span class="profile-user-id">ID #{{.ProfileUser.ID}}</span>
+          </div>
+          {{else}}<p>Thành viên Sổ tay sinh viên</p>{{end}}
+          <span class="profile-status">{{len .ProfilePosts}} bài viết đã đăng</span>
+        </div>
+      </section>
+
+      {{if .IsOwnProfile}}
+      <form id="profileForm" class="profile-form compact-profile-form" method="post" action="/ho-so" enctype="multipart/form-data">
+        {{if .ReturnTo}}<input type="hidden" name="next" value="{{.ReturnTo}}">{{end}}
+        <input id="avatarInput" class="avatar-input" type="file" name="avatar" accept="image/jpeg,image/png,image/webp">
+        <details class="profile-edit-disclosure" {{if .Message}}open{{end}}>
+          <summary class="profile-edit-summary"><span><img src="/web/icons/settings.svg?v=2.0.0" alt=""><b>Cập nhật hồ sơ</b><small>Ảnh đại diện, họ tên, số điện thoại và thông tin xác thực</small></span><img class="profile-edit-chevron" src="/web/icons/chevron-down.svg?v=2.0.0" alt=""></summary>
+          <div class="profile-grid compact-profile-grid">
+            <section class="profile-info edit-panel">
+              <div class="panel-heading"><div><span>THÔNG TIN</span><h2>Thông tin cá nhân</h2></div><img src="/web/icons/user-round.svg?v=2.0.0" alt=""></div>
+              <label class="form-field">Họ và tên<input name="name" value="{{.ProfileUser.Name}}" placeholder="Nhập họ và tên" required></label>
+              <label class="form-field phone-main-field">
+                <span class="phone-field-head"><span>Số điện thoại</span>{{if .ProfileUser.PhoneVerified}}<b class="phone-verified">✓ Đã xác thực</b>{{else}}<b class="phone-unverified" id="phoneVerifyState">Chưa xác thực</b>{{end}}</span>
+                <input id="profilePhoneInput" name="phone" value="{{.ProfileUser.Phone}}" inputmode="tel" autocomplete="tel" placeholder="Ví dụ: 0912345678">
+                <small>Dùng làm thông tin liên hệ và xác thực hồ sơ.</small>
+              </label>
+              {{if not .ProfileUser.PhoneVerified}}
+                {{if .PhoneVerificationPending}}
+                  <div class="phone-verification-pending compact-phone-status" id="phoneVerificationPending">Yêu cầu xác thực số điện thoại đang chờ duyệt.</div>
+                {{else}}
+                  <button id="phoneVerifyButton" class="phone-verification-button compact-phone-button {{if not .ProfileUser.Phone}}is-hidden{{end}}" type="submit" formaction="/phone-verification/request" formmethod="post"><img src="/web/icons/shield-check.svg?v=2.0.0" alt=""> Xác thực số điện thoại</button>
+                {{end}}
+              {{end}}
+              <label class="form-field readonly-field">Email<input value="{{.ProfileUser.Email}}" readonly><small>Email hiện tại không thay đổi tại màn hình này.</small></label>
+              <input type="hidden" name="profile_role" id="profileRoleInput" value="{{if .ProfileUser.ProfileRole}}{{.ProfileUser.ProfileRole}}{{else if .ProfileUser.VerificationType}}{{.ProfileUser.VerificationType}}{{else}}student{{end}}">
+
+              <div class="role-profile-block" data-profile-role-panel="student">
+                <div class="role-profile-heading"><div><span>THÔNG TIN SINH VIÊN</span><strong>Dữ liệu hồ sơ dành cho Sinh viên</strong></div>{{if .EducationEmailOK}}<span class="education-email-ok">Email giáo dục</span>{{else if eq .ProfileUser.Provider "phone"}}<span class="education-email-ok">Tài khoản SĐT</span>{{else}}<span class="education-email-bad">Cần xác thực danh tính</span>{{end}}</div>
+                <div class="role-profile-grid">
+                  <label class="form-field education-autocomplete-field">Trường / Đại học
+                    <span class="education-autocomplete-shell">
+                      <input id="schoolInput" name="school" value="{{.ProfileUser.School}}" autocomplete="off" placeholder="Gõ tên trường hoặc mã trường, ví dụ: DLU" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="schoolSuggestions">
+                      <span id="schoolSuggestions" class="education-suggestions" role="listbox" hidden></span>
+                    </span>
+                  </label>
+                  <label class="form-field education-autocomplete-field">Ngành học
+                    <input id="majorInput" name="major" value="{{.ProfileUser.Major}}" list="majorOptions" autocomplete="off" placeholder="Gõ để chọn, ví dụ: Công nghệ thông tin">
+                    <datalist id="majorOptions"></datalist>
+                  </label>
+                  <label class="form-field full-row">Mã số sinh viên<input name="student_id" value="{{.ProfileUser.StudentID}}" placeholder="Ví dụ: 2411841"></label>
+                </div>
+                {{if and (not .EducationEmailOK) (ne .ProfileUser.Provider "phone")}}<p class="education-email-note">Vai trò Sinh viên cần email giáo dục hoặc tài khoản đăng ký bằng số điện thoại để gửi quản trị viên xác thực.</p>{{end}}
+              </div>
+
+              <div class="role-profile-block is-hidden" data-profile-role-panel="employer">
+                <div class="role-profile-heading"><div><span>THÔNG TIN NHÀ TUYỂN DỤNG</span><strong>Dữ liệu hồ sơ dành cho đơn vị tuyển dụng</strong></div><span class="role-profile-pill employer"><img src="/web/icons/briefcase-business.svg?v=2.0.0" alt=""> Nhà tuyển dụng</span></div>
+                <div class="role-profile-grid">
+                  <label class="form-field">Tên công ty / đơn vị<input name="employer_company" value="{{.ProfileUser.EmployerCompany}}" placeholder="Ví dụ: Công ty ABC"></label>
+                  <label class="form-field">Mã số thuế / mã doanh nghiệp<input name="employer_tax_code" value="{{.ProfileUser.EmployerTaxCode}}" placeholder="Nhập mã số thuế"></label>
+                  <label class="form-field">Chức vụ / người đại diện<input name="employer_representative" value="{{.ProfileUser.EmployerRepresentative}}" placeholder="Ví dụ: Trưởng phòng nhân sự"></label>
+                  <label class="form-field">Website / Fanpage<input name="employer_website" value="{{.ProfileUser.EmployerWebsite}}" placeholder="https://..."></label>
+                </div>
+              </div>
+
+              <div class="role-profile-block is-hidden" data-profile-role-panel="landlord">
+                <div class="role-profile-heading"><div><span>THÔNG TIN CHỦ TRỌ</span><strong>Dữ liệu hồ sơ dành cho người cho thuê</strong></div><span class="role-profile-pill landlord"><img src="/web/icons/house.svg?v=2.0.0" alt=""> Chủ trọ</span></div>
+                <div class="role-profile-grid">
+                  <label class="form-field">Tên chủ trọ / cơ sở<input name="landlord_name" value="{{.ProfileUser.LandlordName}}" placeholder="Ví dụ: Nhà trọ Minh Anh"></label>
+                  <label class="form-field">Địa chỉ khu trọ<input name="landlord_address" value="{{.ProfileUser.LandlordAddress}}" placeholder="Nhập địa chỉ khu trọ"></label>
+                  <label class="form-field">Số điện thoại liên hệ<input name="landlord_phone" value="{{.ProfileUser.LandlordPhone}}" inputmode="tel" placeholder="Ví dụ: 09xxxxxxxx"></label>
+                  <label class="form-field">Thông tin giấy tờ xác minh<textarea name="landlord_legal_info" rows="3" placeholder="Mô tả giấy tờ hoặc thông tin để đối chiếu">{{.ProfileUser.LandlordLegalInfo}}</textarea></label>
+                </div>
+              </div>
+
+              <button class="save-profile" type="submit"><img src="/web/icons/check.svg?v=2.0.0" alt=""> Lưu thay đổi</button>
+            </section>
+            <aside class="profile-actions compact-actions verification-panel">
+              <div class="verification-heading"><div><span>XÁC THỰC</span><h2>Yêu cầu xác thực</h2></div>{{if .ProfileUser.IsVerified}}<span class="verified-state"><img src="/web/icons/check.svg?v=2.0.0" alt=""> Tài khoản uy tín</span>{{end}}</div>
+
+              {{if and .VerificationRequest (eq .VerificationRequest.Status "pending")}}<div class="verification-pending"><strong>Vai trò đang chờ duyệt</strong><p>Quản trị viên đang kiểm tra yêu cầu xác thực vai trò của bạn.</p></div>{{end}}
+              {{if and .VerificationRequest (eq .VerificationRequest.Status "rejected")}}<div class="verification-rejected">Yêu cầu vai trò trước đã bị từ chối. Bạn có thể cập nhật hồ sơ và gửi lại.</div>{{end}}
+
+              <div class="verification-form" data-verification-ui>
+                <div class="verification-types">
+                  <label class="{{if and (not .EducationEmailOK) (ne .ProfileUser.Provider "phone")}}verification-type-disabled{{end}}"><input form="verificationRequestForm" type="radio" name="type" value="student" {{if eq .ProfileUser.ProfileRole "student"}}checked{{else if and (not .ProfileUser.ProfileRole) (or .EducationEmailOK (eq .ProfileUser.Provider "phone"))}}checked{{end}} {{if and (not .EducationEmailOK) (ne .ProfileUser.Provider "phone")}}disabled{{end}}><span><img src="/web/icons/graduation-cap.svg?v=2.0.0" alt=""><b>Sinh viên</b><small>{{if .EducationEmailOK}}Xác thực bằng email giáo dục{{else if eq .ProfileUser.Provider "phone"}}Xác thực hồ sơ bằng số điện thoại{{else}}Cần danh tính hợp lệ{{end}}</small></span></label>
+                  <label><input form="verificationRequestForm" type="radio" name="type" value="employer" {{if eq .ProfileUser.ProfileRole "employer"}}checked{{else if and (not .ProfileUser.ProfileRole) (and (not .EducationEmailOK) (ne .ProfileUser.Provider "phone"))}}checked{{end}}><span><img src="/web/icons/briefcase-business.svg?v=2.0.0" alt=""><b>Nhà tuyển dụng</b><small>Xác thực đơn vị tuyển dụng</small></span></label>
+                  <label><input form="verificationRequestForm" type="radio" name="type" value="landlord" {{if eq .ProfileUser.ProfileRole "landlord"}}checked{{end}}><span><img src="/web/icons/house.svg?v=2.0.0" alt=""><b>Chủ trọ</b><small>Xác thực thông tin cho thuê</small></span></label>
+                </div>
+
+
+                {{if .ProfileUser.VerificationType}}
+                <div class="approved-role-card"><span>Huy hiệu vai trò hiện tại</span><strong>{{if eq .ProfileUser.VerificationType "student"}}🎓 Sinh viên{{else if eq .ProfileUser.VerificationType "employer"}}💼 Nhà tuyển dụng{{else if eq .ProfileUser.VerificationType "landlord"}}🏠 Chủ trọ{{end}}</strong></div>
+                {{end}}
+
+                <button class="verification-submit" type="submit" form="verificationRequestForm"><img src="/web/icons/shield-check.svg?v=2.0.0" alt=""> Gửi yêu cầu xác thực vai trò</button>
+              </div>
+            </aside>
+          </div>
+        </details>
+      </form>
+      <form id="verificationRequestForm" method="post" action="/verification/request"></form>
+      {{end}}
+
+      <section class="profile-posts-section">
+        <div class="profile-posts-heading">
+          <div><span>BÀI VIẾT</span><h2>{{if .IsOwnProfile}}Bài viết của tôi{{else}}Bài viết đã đăng{{end}}</h2></div>
+          <strong>{{len .ProfilePosts}}</strong>
+        </div>
+        <div class="profile-posts-grid">
+          {{range .ProfilePosts}}
+          <article class="profile-post-card">
+            <a class="profile-post-main" href="/bai-viet/{{.Post.ID}}">
+              {{if .Meta.ImageURL}}<img class="profile-post-image" src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async">{{else}}<div class="profile-post-placeholder"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""></div>{{end}}
+              <div class="profile-post-copy">
+                <div class="profile-post-meta"><span>@{{.Post.CategoryName}}</span><time>{{dateVN .Post.CreatedAt}}</time></div>
+                <h3>{{.Post.Title}}</h3>
+                <p>{{excerpt .Post.Summary}}</p>
+                <div class="profile-post-stats"><span><img src="/web/icons/arrow-up.svg?v=2.0.0" alt=""> {{.Stats.Score}} điểm</span><span><img src="/web/icons/message-circle.svg?v=2.0.0" alt=""> {{.Stats.Comments}} bình luận</span></div>
+              </div>
+            </a>
+            {{if $.IsOwnProfile}}
+            <div class="owner-post-actions">
+              <a class="edit-own-post" href="/bai-viet/sua?id={{.Post.ID}}"><img src="/web/icons/settings.svg?v=2.0.0" alt=""> Sửa</a>
+              <form method="post" action="/post/delete-own" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?')"><input type="hidden" name="id" value="{{.Post.ID}}"><button type="submit"><img src="/web/icons/x.svg?v=2.0.0" alt=""> Xóa</button></form>
+            </div>
+            {{end}}
+          </article>
+          {{else}}
+          <div class="profile-post-empty"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""><strong>Chưa có bài viết nào</strong><p>{{if $.IsOwnProfile}}Hãy tạo bài viết đầu tiên của bạn.{{else}}Người dùng này chưa đăng bài viết.{{end}}</p></div>
+          {{end}}
+        </div>
+      </section>
+    </section>
+  </main>
+<script src="/web/profile/profile.js?v=2.0.0"></script>
+<script src="/web/shared/header.js?v=2.0.0"></script>
+</body>
+</html>{{end}}

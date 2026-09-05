@@ -1,0 +1,610 @@
+{{define "admin.html"}}
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/web/admin/admin.css?v=2.0.0">
+  <link rel="stylesheet" href="/web/shared/header.css?v=2.0.0">
+</head>
+<body class="admin-bg">
+{{template "site_header" .}}
+
+<main class="admin-shell">
+  <aside class="admin-side">
+    <div class="admin-side-brand"><span class="side-brand-mark">DL</span><div><small>ĐÀ LẠT STUDENT HUB</small><h3>Quản trị</h3></div></div>
+    <div class="side-group-label">Nội dung</div>
+    <button class="side-link active" data-tab="posts"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""><span>Bài viết</span><em>{{len .Posts}}</em></button>
+    <button class="side-link" data-tab="moderation"><img src="/web/icons/shield-check.svg?v=2.0.0" alt=""><span>Kiểm duyệt</span><em>{{len .Reports}}</em></button>
+    <button class="side-link" data-tab="verification"><img src="/web/icons/user-round.svg?v=2.0.0" alt=""><span>Xác thực tài khoản</span><em>{{len .VerificationRequests}}</em></button>
+    <div class="side-group-label">Cấu hình</div>
+    <button class="side-link" data-tab="categories"><img src="/web/icons/layout-grid.svg?v=2.0.0" alt=""><span>Chuyên mục & Form</span><em>{{len .Categories}}</em></button>
+    <button class="side-link" data-tab="filter-data"><img src="/web/icons/search.svg?v=2.0.0" alt=""><span>Dữ liệu bộ lọc</span><em>{{len .FilterValues}}</em></button>
+    <button class="side-link" data-tab="ads"><img src="/web/icons/megaphone.svg?v=2.0.0" alt=""><span>Quảng cáo</span><em>{{len .Ads}}</em></button>
+    <div class="side-note">
+      <b>Mẹo quản trị</b>
+      <span>Kéo thả chuyên mục và trường form để sắp xếp. Các thay đổi thứ tự được lưu ngay.</span>
+    </div>
+  </aside>
+
+  <section class="admin-main">
+    {{if .Message}}<div class="alert success">{{.Message}}</div>{{end}}
+
+    <section class="admin-hero-card">
+      <div class="admin-hero-copy">
+        <span class="eyebrow">TRUNG TÂM ĐIỀU HÀNH</span>
+        <h1>Quản lý Sổ tay sinh viên</h1>
+        <p>Một bảng điều khiển gọn để quản lý nội dung, kiểm duyệt cộng đồng, thiết kế chuyên mục và form đăng bài theo từng nhu cầu.</p>
+        <div class="admin-hero-actions"><a href="/dang-bai" class="admin-quick-primary">+ Tạo bài viết</a><button type="button" class="admin-quick-ghost" data-jump-tab="categories">Thiết kế form</button><button type="button" class="admin-quick-ghost" data-jump-tab="moderation">Xem kiểm duyệt</button></div>
+      </div>
+      <div class="dalat-hero-art"><span class="dalat-sun"></span><span class="dalat-hill hill-a"></span><span class="dalat-hill hill-b"></span><span class="dalat-pine pine-a"></span><span class="dalat-pine pine-b"></span><b>ĐÀ LẠT</b></div>
+    </section>
+
+    <section class="admin-stats-grid" aria-label="Thống kê nhanh">
+      <button type="button" class="admin-stat-card" data-jump-tab="posts"><span class="stat-icon"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""></span><div><small>Bài viết đang quản lý</small><strong>{{len .Posts}}</strong><em>Xem danh sách →</em></div></button>
+      <button type="button" class="admin-stat-card" data-jump-tab="moderation"><span class="stat-icon"><img src="/web/icons/shield-check.svg?v=2.0.0" alt=""></span><div><small>Báo cáo / kiểm duyệt</small><strong>{{len .Reports}}</strong><em>Xử lý ngay →</em></div></button>
+      <button type="button" class="admin-stat-card" data-jump-tab="categories"><span class="stat-icon"><img src="/web/icons/layout-grid.svg?v=2.0.0" alt=""></span><div><small>Chuyên mục</small><strong>{{len .Categories}}</strong><em>Sắp xếp & cấu hình →</em></div></button>
+      <button type="button" class="admin-stat-card" data-jump-tab="ads"><span class="stat-icon"><img src="/web/icons/megaphone.svg?v=2.0.0" alt=""></span><div><small>Quảng cáo</small><strong>{{len .Ads}}</strong><em>Quản lý vị trí →</em></div></button>
+    </section>
+
+    <div id="posts" class="tab-panel active">
+      <div class="admin-title">
+        <div>
+          <span class="eyebrow">NỘI DUNG</span>
+          <h1>Quản lý bài viết</h1>
+        </div>
+        <a class="primary link-btn" href="/dang-bai">+ Thêm bài viết</a>
+      </div>
+
+      <form class="admin-filter-bar" method="get" action="/admin">
+        <div class="admin-filter-search"><img src="/web/icons/search.svg?v=2.0.0" alt=""><input name="q" value="{{.AdminQuery}}" placeholder="Tìm theo tiêu đề hoặc nội dung..."></div>
+        <select name="category"><option value="">Tất cả chuyên mục</option>{{range .Categories}}<option value="{{.Slug}}" {{if eq $.AdminCategory .Slug}}selected{{end}}>{{.Name}}</option>{{end}}</select>
+        <select name="filter"><option value="">Tất cả bài viết</option><option value="reported" {{if eq .AdminFilter "reported"}}selected{{end}}>Bài đã bị báo cáo</option></select>
+        <button class="primary" type="submit">Lọc bài viết</button>
+        {{if or .AdminQuery .AdminCategory .AdminFilter}}<a class="ghost clear-filter" href="/admin">Xóa lọc</a>{{end}}
+      </form>
+
+      <div class="table-card">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu đề</th>
+              <th>Chuyên mục</th>
+              <th>Hiển thị</th>
+              <th>Ngày đăng</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{range .Posts}}
+            <tr>
+              <td><strong>{{.Title}}</strong><small>{{.Summary}}</small></td>
+              <td><span class="tag">{{.CategoryName}}</span></td>
+              <td>{{if .IsPinned}}<span class="tag pin-tag">📌 Đã ghim</span>{{else}}<span class="muted-status">Bình thường</span>{{end}}</td>
+              <td>{{dateVN .CreatedAt}}</td>
+              <td class="actions">
+                <form class="ajax-pin-form" method="post" action="/admin/post/pin">
+                  <input type="hidden" name="id" value="{{.ID}}">
+                  {{if .IsPinned}}
+                  <input type="hidden" name="pinned" value="0"><button class="ghost">Bỏ ghim</button>
+                  {{else}}
+                  <input type="hidden" name="pinned" value="1"><button class="ghost">📌 Ghim</button>
+                  {{end}}
+                </form>
+                <button class="ghost edit-post" data-id="{{.ID}}" data-title="{{.Title}}" data-summary="{{.Summary}}" data-content="{{.Content}}" data-category="{{.CategoryID}}">Sửa cơ bản</button>
+                <form method="post" action="/admin/post/delete" onsubmit="return confirm('Xóa bài viết này?')">
+                  <input type="hidden" name="id" value="{{.ID}}">
+                  <button class="danger-link">Xóa</button>
+                </form>
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="moderation" class="tab-panel">
+      <div class="admin-title moderation-title-row">
+        <div><span class="eyebrow">KIỂM DUYỆT</span><h1>Kiểm duyệt & tài khoản</h1><p class="admin-title-desc">Tìm nhanh thành viên theo tên hoặc ID, xử lý tài khoản và theo dõi báo cáo bài viết trong cùng một nơi.</p></div>
+      </div>
+
+      <section class="account-moderation-card">
+        <div class="account-moderation-head">
+          <div><span class="account-kicker">QUẢN LÝ TÀI KHOẢN</span><h2>Tìm và xử lý tài khoản</h2><p>Nhập tên, email, tên đăng nhập hoặc ID. Tối đa 20 kết quả gần nhất được hiển thị.</p></div>
+          <span class="account-result-count">{{len .AdminUsers}} kết quả</span>
+        </div>
+        <form class="account-search-form" method="get" action="/admin">
+          <input type="hidden" name="tab" value="moderation">
+          <div class="account-search-box"><img src="/web/icons/search.svg?v=2.0.0" alt=""><input name="user_q" value="{{.AdminUserQuery}}" placeholder="Nhập tên hoặc ID tài khoản..." autocomplete="off"></div>
+          <button class="primary" type="submit">Tìm tài khoản</button>
+          {{if .AdminUserQuery}}<a class="ghost" href="/admin?tab=moderation">Xóa tìm kiếm</a>{{end}}
+        </form>
+
+        <div class="account-result-list">
+          {{range .AdminUsers}}
+          <article class="account-result-card {{if .IsAdmin}}is-admin{{end}} status-{{.AccountStatus}}">
+            <div class="account-result-main">
+              <div class="account-avatar-admin">{{slice .Name 0 1}}</div>
+              <div class="account-result-copy">
+                <div class="account-name-line"><strong>{{.Name}}</strong><span class="account-id">ID #{{.ID}}</span>{{if .IsAdmin}}<span class="account-badge admin-badge">Quản trị</span>{{end}}{{if eq .AccountStatus "restricted"}}<span class="account-badge restricted-badge">Đang hạn chế</span>{{else if eq .AccountStatus "locked"}}<span class="account-badge locked-badge">Tạm khóa</span>{{else}}<span class="account-badge active-badge">Hoạt động</span>{{end}}</div>
+                <p>{{.Email}}{{if .Username}} · @{{.Username}}{{end}}</p>
+                <div class="account-meta-line"><span>{{if eq .ProfileRole "student"}}Sinh viên{{else if eq .ProfileRole "employer"}}Nhà tuyển dụng{{else if eq .ProfileRole "landlord"}}Chủ trọ{{else}}Thành viên{{end}}</span>{{if .School}}<span>{{.School}}</span>{{end}}{{if .LockedUntil}}<span>Khóa đến: {{.LockedUntil}}</span>{{end}}</div>
+              </div>
+            </div>
+            <div class="account-admin-actions">
+              {{if .IsAdmin}}
+                <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action neutral" name="action" value="revoke_admin" {{if eq .ID $.CurrentUser.ID}}disabled title="Không thể tự thu hồi quyền"{{end}}>Thu hồi quản trị</button></form>
+              {{else}}
+                <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action admin" name="action" value="grant_admin">Cấp quản trị</button></form>
+              {{end}}
+              {{if eq .AccountStatus "restricted"}}
+                <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action success" name="action" value="activate">Bỏ hạn chế</button></form>
+              {{else if eq .AccountStatus "locked"}}
+                <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action success" name="action" value="unlock">Mở khóa</button></form>
+              {{else}}
+                <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action warning" name="action" value="restrict" {{if eq .ID $.CurrentUser.ID}}disabled{{end}}>Hạn chế</button></form>
+              {{end}}
+              <div class="account-lock-menu">
+                <button class="account-action lock account-lock-trigger" type="button" {{if eq .ID $.CurrentUser.ID}}disabled{{end}}>Tạm khóa ▾</button>
+                <div class="account-lock-options">
+                  <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button name="action" value="lock_24h">Khóa 24 giờ</button></form>
+                  <form method="post" action="/admin/user/action"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button name="action" value="lock_7d">Khóa 7 ngày</button></form>
+                </div>
+              </div>
+              <form method="post" action="/admin/user/action" onsubmit="return confirm('Xóa tài khoản này và toàn bộ bài viết của tài khoản?')"><input type="hidden" name="user_id" value="{{.ID}}"><input type="hidden" name="user_q" value="{{$.AdminUserQuery}}"><button class="account-action danger" name="action" value="delete" {{if eq .ID $.CurrentUser.ID}}disabled{{end}}>Xóa tài khoản</button></form>
+            </div>
+          </article>
+          {{else}}<div class="account-empty">Không tìm thấy tài khoản phù hợp.</div>{{end}}
+        </div>
+      </section>
+
+      <div class="moderation-section-divider"><span>BÁO CÁO BÀI VIẾT</span></div>
+      <div class="moderation-toolbar">
+        <div><strong>Hàng chờ xử lý</strong><p>Kiểm tra lý do báo cáo, mở bài viết và chọn cách xử lý phù hợp.</p></div>
+        <form method="get" action="/admin"><input type="hidden" name="tab" value="moderation"><select name="report_status" onchange="this.form.submit()"><option value="pending" {{if eq .ReportStatus "pending"}}selected{{end}}>Đang chờ</option><option value="resolved" {{if eq .ReportStatus "resolved"}}selected{{end}}>Đã xử lý</option><option value="dismissed" {{if eq .ReportStatus "dismissed"}}selected{{end}}>Đã bỏ qua</option><option value="all" {{if eq .ReportStatus "all"}}selected{{end}}>Tất cả</option></select></form>
+      </div>
+      <div class="moderation-list">
+        {{range .Reports}}
+        <article class="report-card">
+          <div class="report-card-head"><div><span class="report-status status-{{.Status}}">{{if eq .Status "pending"}}Đang chờ{{else if eq .Status "resolved"}}Đã xử lý{{else}}Đã bỏ qua{{end}}</span><h3>{{.PostTitle}}</h3></div><a class="ghost" href="/bai-viet/{{.PostID}}" target="_blank">Mở bài ↗</a></div>
+          <div class="report-meta"><span>Người đăng: <b>{{.PostAuthor}}</b></span><span>Người báo cáo: <b>{{.ReporterName}}</b></span><span>{{dateVN .CreatedAt}}</span></div>
+          <div class="report-reason"><b>Lý do báo cáo</b><p>{{.Reason}}</p></div>
+          {{if eq .Status "pending"}}<div class="report-actions">
+            <form method="post" action="/admin/report/action"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="post_id" value="{{.PostID}}"><button class="ghost" name="action" value="dismiss">Bỏ qua báo cáo</button></form>
+            <form method="post" action="/admin/report/action"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="post_id" value="{{.PostID}}"><button class="primary moderation-done" name="action" value="resolve">Đánh dấu đã xử lý</button></form>
+            <form method="post" action="/admin/report/action" onsubmit="return confirm('Xóa bài viết bị báo cáo này?')"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="post_id" value="{{.PostID}}"><button class="danger-action-admin" name="action" value="delete">Xóa bài viết</button></form>
+          </div>{{end}}
+        </article>
+        {{else}}<div class="moderation-empty">Không có báo cáo nào trong trạng thái này.</div>{{end}}
+      </div>
+    </div>
+
+    <div id="verification" class="tab-panel">
+      <div class="admin-title"><div><span class="eyebrow">XÁC THỰC TÀI KHOẢN</span><h1>Yêu cầu xác thực vai trò</h1></div></div>
+      <div class="moderation-toolbar"><div><strong>Kiểm tra thông tin người dùng</strong><p>Duyệt huy hiệu vai trò Sinh viên, Nhà tuyển dụng và Chủ trọ. Tích xanh uy tín được hệ thống tự cấp riêng, không phụ thuộc vai trò.</p></div></div>
+      <div class="verification-admin-list">
+        {{range .VerificationRequests}}
+        <article class="verification-admin-card status-{{.Status}}" data-verification-id="{{.ID}}">
+          <div class="verification-admin-head"><div class="verification-user-avatar">{{slice .UserName 0 1}}</div><div><span class="verification-type">{{if eq .Type "student"}}Sinh viên{{else if eq .Type "employer"}}Nhà tuyển dụng{{else if eq .Type "phone"}}Số điện thoại{{else}}Chủ trọ{{end}}</span><h3>{{.UserName}}</h3><p>{{.UserEmail}}</p></div><span class="report-status status-{{.Status}}">{{if eq .Status "pending"}}Đang chờ{{else if eq .Status "approved"}}Đã duyệt{{else}}Đã từ chối{{end}}</span></div>
+          <div class="verification-admin-info"><b>Thông tin người dùng cung cấp</b><p>{{.Info}}</p></div>
+          <div class="verification-admin-meta">Gửi ngày {{dateVN .CreatedAt}}</div>
+          {{if eq .Status "pending"}}<div class="verification-admin-actions">
+            <form class="verification-action-form" method="post" action="/admin/verification/action"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="action" value="reject"><button class="ghost" type="submit">Từ chối</button></form>
+            <form class="verification-action-form" method="post" action="/admin/verification/action"><input type="hidden" name="id" value="{{.ID}}"><input type="hidden" name="action" value="approve"><button class="primary" type="submit">{{if eq .Type "phone"}}✓ Xác thực số điện thoại{{else}}✓ Duyệt vai trò{{end}}</button></form>
+          </div>{{end}}
+        </article>
+        {{else}}<div class="moderation-empty">Chưa có yêu cầu xác thực nào.</div>{{end}}
+      </div>
+    </div>
+
+    <div id="categories" class="tab-panel">
+      <div class="admin-title category-title-row">
+        <div>
+          <span class="eyebrow">PHÂN LOẠI</span>
+          <h1>Chuyên mục & thiết kế form</h1>
+          <p class="admin-title-desc">Bấm trực tiếp Tên · Hiển thị cho · Thẻ bài viết để chỉnh nhanh; dùng Thiết kế form để cấu hình sâu các trường người dùng phải điền.</p>
+        </div>
+        <button type="button" class="primary category-create-button" id="openNewCategoryModal"><span>＋</span> Tạo chuyên mục</button>
+      </div>
+
+      <div class="category-list-wrap">
+        <div class="table-card">
+          <table>
+            <thead>
+              <tr>
+                <th class="category-drag-col"></th>
+                <th>Thứ tự / Tên</th>
+                <th>Slug</th>
+                <th>Hiển thị cho</th>
+                <th>Thẻ bài viết</th>
+                <th>Thẻ công ty</th>
+                <th>Form bài viết</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {{range .Categories}}
+              <tr class="category-sort-row" draggable="true" data-category-id="{{.ID}}" data-category-name="{{.Name}}" data-category-slug="{{.Slug}}" data-audience-scope="{{.AudienceScope}}" data-post-card-style="{{.PostCardStyle}}" data-show-company-card="{{.ShowCompanyCard}}" data-company-card-style="{{.CompanyCardStyle}}" data-document-formats="{{.DocumentFormats}}">
+                <td class="category-drag-cell"><button type="button" class="category-drag-handle" title="Kéo để sắp xếp">☰</button></td>
+                <td>
+                  <button type="button" class="category-cell-editor category-name-editor" data-category-edit="name" title="Bấm để đổi tên chuyên mục">
+                    <span class="category-cell-main"><strong data-category-name-text>{{.Name}}</strong><small class="category-order-note">Bấm tên để sửa · kéo ☰ để đổi vị trí</small></span><span class="category-edit-mark">✎</span>
+                  </button>
+                </td>
+                <td><code>{{.Slug}}</code></td>
+                <td>
+                  <button type="button" class="category-cell-editor category-audience-editor" data-category-edit="audience" title="Bấm để chỉnh quyền xem nội dung">
+                    <span class="audience-badge-list" data-category-audience-view>{{if audienceHas .AudienceScope "public"}}<span class="audience-badge audience-public">Mọi người</span>{{else}}{{if audienceHas .AudienceScope "members"}}<span class="audience-badge audience-members">Thành viên</span>{{end}}{{if audienceHas .AudienceScope "students"}}<span class="audience-badge audience-students">Sinh viên</span>{{end}}{{if audienceHas .AudienceScope "same_school"}}<span class="audience-badge audience-same_school">Cùng trường</span>{{end}}{{if audienceHas .AudienceScope "admin"}}<span class="audience-badge audience-admin">Quản trị</span>{{end}}{{end}}</span><span class="category-edit-mark">✎</span>
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="category-cell-editor category-style-editor" data-category-edit="post_card_style" title="Bấm để đổi kiểu thẻ bài viết">
+                    <span class="tag card-style-badge card-style-{{.PostCardStyle}}" data-category-card-style-view>{{if eq .PostCardStyle "horizontal"}}Thẻ ngang{{else if eq .PostCardStyle "document"}}Thẻ tài liệu{{else}}Thẻ bình thường{{end}}</span><span class="category-edit-mark">✎</span>
+                  </button>
+                </td>
+                <td>
+                  <button type="button" class="category-cell-editor category-company-editor" data-category-edit="company_card" title="Bấm để chỉnh khối thông tin phụ">
+                    <span class="category-badges" data-category-company-view>
+                      {{if .ShowCompanyCard}}
+                      <span class="tag">Có thẻ</span><span class="tag ghost-tag">{{.CompanyCardStyle}}</span>
+                      {{else}}
+                      <span class="muted-status">Không hiển thị</span>
+                      {{end}}
+                    </span><span class="category-edit-mark">✎</span>
+                  </button>
+                </td>
+                <td><button type="button" class="ghost config-category" data-id="{{.ID}}" data-name="{{.Name}}" data-slug="{{.Slug}}" data-config-b64="{{b64 .FormConfig}}" data-show-company-card="{{.ShowCompanyCard}}" data-company-card-style="{{.CompanyCardStyle}}" data-post-card-style="{{.PostCardStyle}}" data-document-formats="{{.DocumentFormats}}" data-audience-scope="{{.AudienceScope}}">Thiết kế form</button></td>
+                <td>
+                  <form method="post" action="/admin/category/delete" onsubmit="return confirm('Xóa chuyên mục này?')">
+                    <input type="hidden" name="id" value="{{.ID}}">
+                    <button class="danger-link">Xóa</button>
+                  </form>
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="filter-data" class="tab-panel">
+      <div class="panel-heading"><div><span class="eyebrow">DỮ LIỆU LỌC ĐỘNG</span><h2>Duyệt dữ liệu người dùng tự tạo</h2><p>Giá trị mới vẫn được dùng trong bài đăng nhưng chỉ xuất hiện trong bộ lọc/gợi ý sau khi quản trị viên duyệt.</p></div></div>
+      <form class="admin-filter-bar" method="get" action="/admin">
+        <input type="hidden" name="tab" value="filter-data">
+        <select name="filter_category"><option value="0">Tất cả chuyên mục</option>{{range .Categories}}<option value="{{.ID}}" {{if eq $.AdminFilterCategoryID .ID}}selected{{end}}>{{.Name}}</option>{{end}}</select>
+        <input name="filter_field" value="{{.AdminFilterField}}" placeholder="Tên trường, ví dụ: subject">
+        <button class="ghost" type="submit">Lọc dữ liệu</button>
+      </form>
+      <div class="filter-value-admin-list">
+        {{range .FilterValues}}
+        <article class="filter-value-card status-{{.Status}}">
+          <div class="filter-value-main"><span class="filter-value-status">{{if eq .Status "approved"}}ĐÃ DUYỆT{{else}}CHỜ DUYỆT{{end}}</span><h3>{{.Value}}</h3><p>{{.CategoryName}} · {{.FieldLabel}} · {{.UsageCount}} lượt sử dụng</p></div>
+          <div class="filter-value-actions">
+            {{if eq .Status "pending"}}<form method="post" action="/admin/filter-value/action"><input type="hidden" name="id" value="{{.ID}}"><button class="primary" name="action" value="approve">Duyệt</button></form>{{end}}
+            <form class="filter-rename-form" method="post" action="/admin/filter-value/action"><input type="hidden" name="id" value="{{.ID}}"><input name="value" value="{{.Value}}" aria-label="Tên chuẩn"><button class="ghost" name="action" value="rename">Sửa & duyệt</button></form>
+            <form method="post" action="/admin/filter-value/action" onsubmit="return confirm('Xóa giá trị này khỏi kho gợi ý?')"><input type="hidden" name="id" value="{{.ID}}"><button class="danger" name="action" value="delete">Xóa</button></form>
+          </div>
+        </article>
+        {{else}}<div class="empty-state">Chưa có dữ liệu bộ lọc cần quản lý.</div>{{end}}
+      </div>
+    </div>
+
+    <div id="ads" class="tab-panel">
+      <div class="admin-title">
+        <div>
+          <span class="eyebrow">QUẢNG CÁO</span>
+          <h1>Quản lý quảng cáo</h1>
+        </div>
+      </div>
+
+      <div class="admin-section-note">
+        <strong>Thêm quảng cáo theo từng vị trí hiển thị</strong>
+        <p>Bạn có thể thêm quảng cáo cho <b>banner lớn bên phải ở trang chủ</b>, khu vực tài trợ ở trang chủ, hoặc hai cột quảng cáo ở trang bài viết. Trước khi lưu, hãy bấm <b>Xem trước</b> để kiểm tra giao diện. Khi cần, bạn có thể <b>Sửa</b>, <b>Xóa</b> quảng cáo và <b>kéo/thu phóng ảnh ngay trong bản xem trước</b> trước khi lưu.</p>
+      </div>
+
+      <div class="ad-admin-grid">
+        <div class="form-card ad-form-card">
+          <div class="ad-form-head">
+            <div>
+              <h3 id="adFormTitle">Thêm quảng cáo</h3>
+              <p id="adFormHint">Tạo quảng cáo mới. Khi bấm Sửa ở danh sách, form này sẽ nạp lại toàn bộ dữ liệu quảng cáo.</p>
+            </div>
+            <div class="slot-mini-list">
+              <span class="slot-mini">Home Right</span>
+              <span class="slot-mini">Feed</span>
+              <span class="slot-mini">Post Left</span>
+              <span class="slot-mini">Post Right</span>
+            </div>
+          </div>
+          <form method="post" action="/admin/ad/save" enctype="multipart/form-data" id="adForm">
+            <input type="hidden" name="id" id="adId">
+            <label>Tiêu đề <small class="optional-label">(không bắt buộc)</small><input name="title" id="adTitle" placeholder="Có thể để trống nếu chỉ dùng ảnh"></label>
+            <label>Nội dung <small class="optional-label">(không bắt buộc)</small><textarea name="description" id="adDescription" rows="4" placeholder="Có thể để trống nếu chỉ dùng ảnh"></textarea></label>
+            <div class="ad-position-field">
+              <span class="field-label">Vị trí hiển thị</span>
+              <input type="hidden" name="position" id="adPosition" value="home-right" required>
+              <div class="ad-position-picker" id="adPositionPicker">
+                <button type="button" class="ad-position-option active" data-position="home-right">
+                  <span class="position-mini-map home-map"><i class="map-left"></i><i class="map-right active-slot"></i></span>
+                  <b>Banner lớn trang chủ</b><small>Bên phải khối tìm kiếm</small>
+                </button>
+                <button type="button" class="ad-position-option" data-position="feed-sponsored">
+                  <span class="position-mini-map feed-map"><i class="active-slot"></i><i></i><i></i><i></i></span>
+                  <b>Feed · xen kẽ bài viết</b><small>Trang chủ: Ghim/Xu hướng · Chuyên mục: cột đầu tiên</small>
+                </button>
+                <button type="button" class="ad-position-option" data-position="post-left">
+                  <span class="position-mini-map post-map"><i class="active-slot"></i><i></i><i></i></span>
+                  <b>Bài viết · bên trái</b><small>Cột phụ bên trái</small>
+                </button>
+                <button type="button" class="ad-position-option" data-position="post-right">
+                  <span class="position-mini-map post-map"><i></i><i></i><i class="active-slot"></i></span>
+                  <b>Bài viết · bên phải</b><small>Cột phụ bên phải</small>
+                </button>
+              </div>
+            </div>
+            <label>Ảnh quảng cáo<input type="file" name="ad_image" id="adImage" accept="image/jpeg,image/png,image/webp"><small class="ad-image-edit-note" id="adImageEditNote">Khi chỉnh sửa, nếu không chọn ảnh mới thì ảnh hiện tại vẫn được giữ nguyên.</small></label>
+            <label>Liên kết<input name="link_url" id="adLink" placeholder="https://..."></label>
+            <input type="hidden" name="sort_order" id="adOrder" value="10"><div class="sort-help"><b>Thứ tự hiển thị</b><span>Kéo thả quảng cáo trong danh sách bên phải để sắp xếp. Hệ thống tự lưu.</span></div>
+            <label class="check-row"><input type="checkbox" name="active" id="adActive" checked> Đang hiển thị</label>
+            <div class="ad-form-actions">
+              <button type="button" class="ghost" id="adReset">Tạo mới</button>
+              <button type="button" class="ghost preview-form-btn" id="adPreviewButton"><img class="admin-inline-icon" src="/web/icons/eye.svg?v=2.0.0" alt=""> Xem trước</button>
+              <button class="primary" id="adSaveButton">Lưu quảng cáo</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="ad-right-column">
+          <div class="slot-guide-card ad-live-preview-card">
+            <div class="slot-guide-head live-preview-head">
+              <div>
+                <span class="eyebrow">VỊ TRÍ HIỂN THỊ</span>
+                <h3>Xem trước & chỉnh ảnh quảng cáo</h3>
+                <p>Thay đổi nội dung, ảnh hoặc vị trí ở khung bên trái để xem kết quả ngay tại đây. Có thể kéo ảnh trực tiếp và dùng thanh thu phóng để căn khung.</p>
+              </div>
+              <span class="live-preview-position" id="adLivePreviewPosition">Trang chủ · banner quảng cáo lớn bên phải</span>
+            </div>
+            <div id="adLivePreviewCanvas" class="ad-live-preview-canvas"></div>
+            <div class="ad-image-editor" id="adImageEditor" aria-live="polite">
+              <div class="ad-image-editor-head">
+                <div>
+                  <strong>Chỉnh ảnh trong xem trước</strong>
+                  <small id="adImageEditorStatus">Chọn hoặc tải ảnh quảng cáo để bắt đầu chỉnh.</small>
+                </div>
+                <span class="ad-image-ratio" id="adImageRatioLabel">Khung 16:7</span>
+              </div>
+              <div class="ad-image-editor-controls">
+                <label class="ad-zoom-control">
+                  <span>Thu phóng</span>
+                  <input type="range" id="adImageZoom" min="1" max="3" step="0.01" value="1" disabled>
+                  <b id="adImageZoomValue">100%</b>
+                </label>
+                <div class="ad-image-editor-actions">
+                  <button type="button" class="ghost" id="adImageCenter" disabled>Căn giữa</button>
+                  <button type="button" class="ghost" id="adImageResetCrop" disabled>Hoàn tác</button>
+                  <button type="button" class="primary" id="adImageApplyCrop" disabled>Áp dụng ảnh đã chỉnh</button>
+                </div>
+              </div>
+              <p class="ad-image-editor-help">Kéo trực tiếp ảnh trong khung xem trước để đổi vùng hiển thị. Khi bấm <b>Áp dụng ảnh đã chỉnh</b>, hệ thống tạo một ảnh mới theo đúng tỷ lệ của vị trí quảng cáo và dùng ảnh đó khi lưu.</p>
+            </div>
+          </div>
+
+          <div class="table-card ad-list-card">
+            <table>
+              <thead>
+                <tr>
+                  <th class="drag-col"></th>
+                  <th>Quảng cáo</th>
+                  <th>Vị trí</th>
+                  <th>Trạng thái</th>
+                  <th>Thứ tự</th>
+                  <th class="ad-actions-head">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="adSortable">
+                {{range .Ads}}
+                <tr class="ad-sort-row" draggable="true" data-ad-id="{{.ID}}">
+                  <td class="drag-cell"><span class="ad-drag-handle" title="Kéo để sắp xếp">☰</span></td>
+                  <td><strong>{{.Title}}</strong><small>{{.Description}}</small></td>
+                  <td><code>{{.Position}}</code></td>
+                  <td>{{if .Active}}Đang bật{{else}}Đã tắt{{end}}</td>
+                  <td>{{.SortOrder}}</td>
+                  <td class="actions ad-row-actions">
+                    <button type="button" class="ghost preview-ad-row" data-title="{{.Title}}" data-description="{{.Description}}" data-position="{{.Position}}" data-link="{{.LinkURL}}" data-image="{{.ImageURL}}">Xem trước</button>
+                    <button type="button" class="ghost edit-ad" data-id="{{.ID}}" data-title="{{.Title}}" data-description="{{.Description}}" data-position="{{.Position}}" data-link="{{.LinkURL}}" data-order="{{.SortOrder}}" data-active="{{.Active}}" data-image="{{.ImageURL}}">Sửa</button>
+                    <form class="ajax-delete-ad" method="post" action="/admin/ad/delete">
+                      <input type="hidden" name="id" value="{{.ID}}">
+                      <button class="danger-link">Xóa</button>
+                    </form>
+                  </td>
+                </tr>
+                {{else}}
+                <tr class="ad-empty-row"><td colspan="6">Chưa có quảng cáo.</td></tr>
+                {{end}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+
+<div id="newCategoryModal" class="modal category-create-modal">
+  <div class="modal-card category-create-modal-card">
+    <div class="modal-head category-create-modal-head">
+      <div><span class="eyebrow">CHUYÊN MỤC MỚI</span><h2>Tạo chuyên mục</h2><p>Thiết lập quyền xem nội dung, chọn mẫu form và kéo thả các trường trước khi lưu.</p></div>
+      <button class="modal-close" type="button" id="closeNewCategoryModal" aria-label="Đóng">×</button>
+    </div>
+    <div class="category-create-modal-body">
+          <form method="post" action="/admin/category/save" id="newCategoryForm">
+            <div class="category-basics">
+              <label>Tên chuyên mục<input name="name" required placeholder="Ví dụ: Tuyển dụng"></label>
+              <label>Slug<input name="slug" required placeholder="tuyen-dung"></label>
+            </div>
+            <div class="audience-setting-card audience-multi-card" data-audience-group>
+              <div class="audience-setting-head"><div><span class="audience-kicker">QUYỀN TRUY CẬP</span><strong>Chuyên mục hiển thị cho ai?</strong><small>Chuyên mục luôn xuất hiện trên thanh chuyên mục. Lựa chọn này chỉ quyết định ai được xem nội dung bên trong. Có thể chọn nhiều nhóm.</small></div><span class="audience-selection-count" data-audience-count>1 nhóm</span></div>
+              <div class="audience-choice-grid">
+                <label class="audience-choice audience-choice-public"><input type="checkbox" name="audience_scope" value="public" checked><span class="audience-choice-icon">◎</span><span><b>Mọi người</b><small>Ai cũng có thể xem</small></span><i>✓</i></label>
+                <label class="audience-choice"><input type="checkbox" name="audience_scope" value="members"><span class="audience-choice-icon">●</span><span><b>Thành viên</b><small>Đã đăng nhập</small></span><i>✓</i></label>
+                <label class="audience-choice"><input type="checkbox" name="audience_scope" value="students"><span class="audience-choice-icon">🎓</span><span><b>Sinh viên</b><small>Tài khoản sinh viên</small></span><i>✓</i></label>
+                <label class="audience-choice"><input type="checkbox" name="audience_scope" value="same_school"><span class="audience-choice-icon">⌂</span><span><b>Cùng trường</b><small>Sinh viên cùng trường</small></span><i>✓</i></label>
+                <label class="audience-choice"><input type="checkbox" name="audience_scope" value="admin"><span class="audience-choice-icon">◆</span><span><b>Quản trị viên</b><small>Chỉ đội ngũ quản trị</small></span><i>✓</i></label>
+              </div>
+            </div>
+
+            <div class="category-display-settings post-card-style-settings">
+              <div class="settings-head"><strong>Kiểu thẻ bài viết của chuyên mục</strong><small>Chọn cách bài viết thuộc chuyên mục này hiển thị trên bảng tin.</small></div>
+              <div class="card-style-choice-grid">
+                <label class="card-style-choice"><input type="radio" name="post_card_style" value="normal" checked><span class="card-style-preview normal"><i></i><i></i><i></i></span><b>Thẻ bình thường</b><small>Kiểu bài viết tiêu chuẩn</small></label>
+                <label class="card-style-choice"><input type="radio" name="post_card_style" value="horizontal"><span class="card-style-preview horizontal"><i></i><i></i></span><b>Thẻ ngang</b><small>Ảnh và nội dung nằm ngang</small></label>
+                <label class="card-style-choice"><input type="radio" name="post_card_style" value="document"><span class="card-style-preview document"><i>PDF</i><i></i></span><b>Thẻ tài liệu</b><small>Ưu tiên môn học, loại tài liệu, niên khóa</small></label>
+              </div>
+            </div>
+            <div class="document-format-settings" data-document-format-settings>
+              <div class="settings-head"><strong>Định dạng tài liệu được phép đăng</strong><small>Chỉ áp dụng khi chuyên mục dùng Thẻ tài liệu. Có thể chọn nhiều định dạng.</small></div>
+              <div class="document-format-grid">
+                <label><input type="checkbox" name="document_formats" value="pdf" checked><span><b>PDF</b><small>Xem trực tiếp</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="doc"><span><b>DOC</b><small>Word cũ</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="docx" checked><span><b>DOCX</b><small>Word</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="xls"><span><b>XLS</b><small>Excel cũ</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="xlsx" checked><span><b>XLSX</b><small>Excel</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="ppt"><span><b>PPT</b><small>PowerPoint cũ</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="pptx" checked><span><b>PPTX</b><small>PowerPoint</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="txt" checked><span><b>TXT</b><small>Văn bản</small></span></label>
+                <label><input type="checkbox" name="document_formats" value="zip"><span><b>ZIP</b><small>Gói tài liệu</small></span></label>
+              </div>
+            </div>
+            <div class="category-display-settings">
+              <div class="settings-head">
+                <strong>Khối tóm tắt bên phải</strong>
+                <small>Với bài thường: tóm tắt công ty. Với Thẻ tài liệu: tự chuyển thành Tóm tắt tài liệu + Tải về.</small>
+              </div>
+              <div class="settings-grid">
+                <label class="check-row inline-setting"><input type="checkbox" name="show_company_card" id="newShowCompanyCard"> Hiển thị thẻ tóm tắt công ty</label>
+                <label>Loại thẻ<select name="company_card_style" id="newCompanyCardStyle"><option value="full">Thẻ đầy đủ</option><option value="horizontal">Thẻ ngang</option><option value="vertical">Thẻ dọc</option></select></label>
+              </div>
+            </div>
+            <div class="field-preset-box"><div><strong>Mẫu form nhanh</strong><small>Bật nhanh nhóm trường phù hợp, sau đó vẫn có thể kéo thả và chỉnh từng trường.</small></div><div class="field-preset-actions"><button type="button" class="field-preset" data-preset="basic" data-list="newFieldConfig">Cơ bản</button><button type="button" class="field-preset" data-preset="job" data-list="newFieldConfig">Việc làm</button><button type="button" class="field-preset" data-preset="event" data-list="newFieldConfig">Sự kiện</button><button type="button" class="field-preset" data-preset="scholarship" data-list="newFieldConfig">Học bổng</button><button type="button" class="field-preset" data-preset="document" data-list="newFieldConfig">Tài liệu học tập</button></div></div>
+            <div class="config-title">
+              <strong>Thiết kế form bằng kéo thả</strong>
+              <small>Các trường được chia nhóm để tìm nhanh. Bạn có thể sửa tên hiển thị trực tiếp, kéo ☰ hoặc dùng ↑ ↓ để sắp xếp.</small>
+            </div>
+            <div class="form-designer single-designer">
+              <div class="designer-column">
+                <div class="designer-head"><b>Các trường của form</b><span>Sửa tên · lọc nhóm · kéo sắp xếp</span></div>
+                <div id="newFieldConfig" class="field-config-list sortable-fields"></div>
+              </div>
+            </div>
+            <div class="builder-actions">
+              <span class="save-note">Thứ tự kéo thả sẽ được lưu tự động.</span>
+              <div class="builder-btns">
+                <button type="button" class="ghost preview-form-btn" data-list="newFieldConfig" data-title="Xem trước form · Chuyên mục mới"><img class="admin-inline-icon" src="/web/icons/eye.svg?v=2.0.0" alt=""> Xem trước form</button>
+                <button class="primary">Tạo chuyên mục</button>
+              </div>
+            </div>
+          </form>
+
+    </div>
+  </div>
+</div>
+
+<div id="postModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div><span class="eyebrow">BÀI VIẾT</span><h2 id="modalTitle">Sửa bài viết</h2></div>
+      <button class="modal-close" onclick="closePostForm()">×</button>
+    </div>
+    <form method="post" action="/admin/post/save">
+      <input type="hidden" name="id" id="postId">
+      <label>Tiêu đề<input name="title" id="postTitle" required></label>
+      <label>Tóm tắt<textarea name="summary" id="postSummary" rows="3"></textarea></label>
+      <label>Chuyên mục<select name="category_id" id="postCategory" required>{{range .Categories}}<option value="{{.ID}}">{{.Name}}</option>{{end}}</select></label>
+      <label>Nội dung<textarea name="content" id="postContent" rows="10" required></textarea></label>
+      <div class="modal-actions"><button type="button" class="ghost" onclick="closePostForm()">Hủy</button><button class="primary">Lưu</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="configModal" class="modal form-studio-modal">
+  <div class="modal-card config-modal form-studio-card form-studio-card-compact">
+    <form method="post" action="/admin/category/config" id="configForm" class="form-studio-form form-studio-form-compact">
+      <input type="hidden" name="id" id="configCategoryId"><input type="hidden" name="category_id" id="configCategoryIdFallback"><input type="hidden" name="category_slug" id="configCategorySlug">
+      <section class="form-studio-workspace form-studio-workspace-only">
+        <div class="form-studio-workspace-head form-studio-workspace-head-only">
+          <div><span class="module-kicker">CẤU TRÚC FORM</span><h3>Trường dữ liệu</h3></div>
+          <div class="form-studio-workspace-tools"><span class="module-lock-note">Mã kỹ thuật được khóa để bảo toàn dữ liệu</span><button class="modal-close form-studio-inline-close" type="button" onclick="closeConfigForm()" aria-label="Đóng">×</button></div>
+        </div>
+        <div id="editFieldConfig" class="field-config-list sortable-fields form-module-list"></div>
+      </section>
+      <div class="modal-actions form-studio-actions"><button type="button" class="ghost" onclick="closeConfigForm()">Hủy</button><button type="button" class="ghost preview-form-btn" data-list="editFieldConfig" data-title="Xem trước form"><img class="admin-inline-icon" src="/web/icons/eye.svg?v=2.0.0" alt=""> Xem trước</button><button class="primary" type="submit">Lưu module form</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="categoryQuickModal" class="modal category-quick-modal">
+  <div class="modal-card category-quick-card">
+    <div class="category-quick-head"><div><span class="eyebrow">CHỈNH NHANH CHUYÊN MỤC</span><h2 id="categoryQuickTitle">Cập nhật chuyên mục</h2><p id="categoryQuickDesc">Thay đổi này được lưu ngay, không cần mở Form Module Studio.</p></div><button class="modal-close" type="button" id="closeCategoryQuickModal">×</button></div>
+    <form id="categoryQuickForm" method="post" action="/admin/category/meta">
+      <input type="hidden" name="id" id="categoryQuickId"><input type="hidden" name="field" id="categoryQuickField">
+      <div id="categoryQuickBody" class="category-quick-body"></div>
+      <div class="modal-actions category-quick-actions"><button type="button" class="ghost" id="cancelCategoryQuick">Hủy</button><button class="primary" type="submit">Lưu thay đổi</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="customFieldModal" class="modal custom-field-modal">
+  <div class="modal-card custom-field-card">
+    <div class="modal-head">
+      <div><span class="eyebrow">TRƯỜNG TỰ TẠO</span><h2>Thêm trường vào form</h2><p>Tạo một trường mới chỉ dùng cho chuyên mục đang cấu hình.</p></div>
+      <button class="modal-close" type="button" id="closeCustomFieldModal" aria-label="Đóng">×</button>
+    </div>
+    <form id="customFieldForm">
+      <label>Tên trường<input id="customFieldLabel" maxlength="80" placeholder="Ví dụ: Khoa / Bộ môn" required></label>
+      <label>Loại dữ liệu<select id="customFieldType"><option value="text">Văn bản ngắn</option><option value="textarea">Nội dung dài</option><option value="number">Số</option><option value="email">Email</option><option value="url">Liên kết URL</option><option value="date">Ngày</option></select></label>
+      <label class="check-row custom-field-required"><input type="checkbox" id="customFieldRequired"> Bắt buộc người đăng phải điền</label>
+      <div class="custom-field-note">Sau khi thêm, trường sẽ xuất hiện như một module: có thể đổi tên, kéo sắp xếp, dùng làm bộ lọc hoặc xóa.</div>
+      <div class="modal-actions"><button type="button" class="ghost" id="cancelCustomField">Hủy</button><button type="submit" class="primary">＋ Thêm trường</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="previewModal" class="modal preview-modal">
+  <div class="modal-card preview-modal-card">
+    <div class="modal-head">
+      <div><span class="eyebrow">DEMO FORM</span><h2 id="previewModalTitle">Xem trước form</h2><p class="preview-desc">Đây là giao diện mô phỏng trước khi lưu cấu hình chuyên mục.</p></div>
+      <button class="modal-close" type="button" id="closePreviewModal">×</button>
+    </div>
+    <div class="preview-device"><div class="preview-device-bar"><span></span><b>Đăng bài viết</b><span></span></div><div id="previewModalBody" class="form-preview popup-preview"></div></div>
+    <div class="modal-actions"><button type="button" class="primary" id="closePreviewButton">Đóng xem trước</button></div>
+  </div>
+</div>
+
+<div id="adPreviewModal" class="modal preview-modal">
+  <div class="modal-card preview-modal-card ad-preview-modal-card">
+    <div class="modal-head">
+      <div>
+        <span class="eyebrow">DEMO QUẢNG CÁO</span>
+        <h2 id="adPreviewTitle">Xem trước quảng cáo</h2>
+        <p class="preview-desc">Xem nhanh giao diện quảng cáo trước khi lưu vào hệ thống.</p>
+      </div>
+      <button class="modal-close" type="button" id="closeAdPreviewModal">×</button>
+    </div>
+    <div class="preview-device ad-preview-device">
+      <div class="preview-device-bar"><span></span><b id="adPreviewPositionLabel">Trang chủ · banner quảng cáo lớn bên phải</b><span></span></div>
+      <div id="adPreviewCanvas" class="ad-preview-canvas"></div>
+    </div>
+    <div class="modal-actions"><button type="button" class="primary" id="closeAdPreviewButton">Đóng xem trước</button></div>
+  </div>
+</div>
+
+<div id="adminToast" class="admin-toast" role="status" aria-live="polite"><span class="toast-dot"></span><b>Đã lưu</b><small></small></div>
+<script src="/web/admin/admin.js?v=2.0.0"></script>
+<script src="/web/shared/header.js?v=2.0.0"></script>
+</body>
+</html>
+{{end}}

@@ -1,0 +1,17 @@
+.git
+.github
+.env
+.env.*
+*.db
+*.db-wal
+*.db-shm
+uploads/*
+!uploads/.gitkeep
+.DS_Store
+__MACOSX/
+
+config/*.secret.env
+config/production.private.env
+config/local.private.env
+.env.local
+.env.production

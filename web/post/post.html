@@ -1,0 +1,233 @@
+{{define "commentNode"}}
+<div class="comment-node depth-{{.Depth}}">
+  <div class="comment-main">
+    <div class="comment-avatar">{{slice .UserName 0 1}}</div>
+    <div class="comment-body">
+      <div class="comment-top"><strong>{{.UserName}}</strong><span>{{dateVN .CreatedAt}}</span></div>
+      <div class="comment-content">{{.Content}}</div>
+      <div class="comment-actions">
+        {{if lt .Depth 3}}
+        <button type="button" class="reply-toggle" data-reply-target="reply-{{.ID}}" data-reply-name="{{.UserName}}"><img class="inline-icon" src="/web/icons/reply.svg?v=2.0.0" alt=""> Trả lời</button>
+        {{else}}
+        <span class="reply-limit">Tối đa 3 cấp trả lời</span>
+        {{end}}
+      </div>
+      {{if lt .Depth 3}}
+      <form id="reply-{{.ID}}" class="reply-form hidden" method="post" action="/comment/add">
+        <input type="hidden" name="post_id" value="{{.PostID}}">
+        <input type="hidden" name="parent_id" value="{{.ID}}">
+        <input type="hidden" name="next" value="/bai-viet/{{.PostID}}">
+        <div class="reply-hint">Đang trả lời <b>@{{.UserName}}</b></div>
+        <textarea name="content" rows="3" placeholder="Trả lời @{{.UserName}}..." required></textarea>
+        <div class="reply-actions"><button>Gửi trả lời</button></div>
+      </form>
+      {{end}}
+      {{if .Children}}
+      <div class="comment-children">
+        {{range .Children}}{{template "commentNode" .}}{{end}}
+      </div>
+      {{end}}
+    </div>
+  </div>
+</div>
+{{end}}
+
+{{define "post.html"}}<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/web/home/home.css?v=2.0.0">
+  <link rel="stylesheet" href="/web/post/post.css?v=2.0.0">
+  <link rel="stylesheet" href="/web/shared/header.css?v=2.0.0">
+</head>
+<body>
+{{template "site_header" .}}
+
+<main class="detail-page shell-wide">
+  <aside class="left-rail">
+    <section class="owner-card side-block">
+      {{if .Author}}<a class="owner-profile-link" href="/nguoi-dung/{{.Author.ID}}"><div class="owner-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="Ảnh đại diện tác giả" decoding="async">{{else}}{{slice .Author.Name 0 1}}{{end}}</div><h3>{{.Author.Name}}</h3></a>{{else}}<div class="owner-avatar">S</div><h3>Sổ tay sinh viên</h3>{{end}}
+      <p>{{if .Author}}Người đăng bài viết này{{else}}Kênh chia sẻ nội dung cho sinh viên{{end}}</p>
+      <div class="owner-meta">
+        <div><b>Chuyên mục</b><span>{{.Post.CategoryName}}</span></div>
+        <div><b>Ngày đăng</b><span>{{dateVN .Post.CreatedAt}}</span></div>
+        {{if .Author}}<div><b>Email</b><span>{{.Author.Email}}</span></div>{{end}}
+      </div>
+    </section>
+    <section class="side-block text-block">
+      <h4>THÔNG TIN</h4>
+      <p>{{if .PostMeta.Deadline}}Hạn cuối: <b>{{.PostMeta.Deadline}}</b>. {{end}}Theo dõi các bài viết đang được cộng đồng sinh viên quan tâm và thảo luận.</p>
+    </section>
+    {{if .LeftAd}}<a class="ad-card managed-ad" href="{{if .LeftAd.LinkURL}}{{.LeftAd.LinkURL}}{{else}}#{{end}}" {{if .LeftAd.LinkURL}}target="_blank" rel="noopener"{{end}}><span class="ad-kicker">Quảng cáo</span>{{if .LeftAd.Title}}<strong>{{.LeftAd.Title}}</strong>{{end}}{{if .LeftAd.Description}}<p>{{.LeftAd.Description}}</p>{{end}}{{if .LeftAd.ImageURL}}<img class="managed-ad-image" src="{{.LeftAd.ImageURL}}" alt="{{.LeftAd.Title}}" loading="lazy" decoding="async" fetchpriority="low">{{end}}{{if .LeftAd.LinkURL}}<span class="ad-btn">Tìm hiểu</span>{{end}}</a>{{else}}<div class="ad-card ad-yellow"><span class="ad-kicker">Gợi ý</span><strong>Góc tài liệu & kỹ năng</strong><p>Tổng hợp kinh nghiệm học tập, bài viết hữu ích và tài nguyên miễn phí cho sinh viên.</p></div>{{end}}
+  </aside>
+
+  <section class="center-column">
+    <article class="article-card">
+      {{if .Message}}<div class="post-page-message">{{.Message}}</div>{{end}}
+      <div class="post-head">
+        {{if .Author}}<a class="mini-author author-profile-link" href="/nguoi-dung/{{.Author.ID}}"><span class="mini-avatar">{{if .Author.AvatarURL}}<img src="{{.Author.AvatarURL}}" alt="Ảnh đại diện tác giả" decoding="async">{{else}}{{slice .Author.Name 0 1}}{{end}}</span><div><div class="mini-author-name">{{.Author.Name}}{{if .Author.IsVerified}}<span class="mini-verified-badge" title="Tài khoản uy tín"><img src="/web/icons/check.svg?v=2.0.0" alt=""></span>{{end}}{{if eq .Author.VerificationType "student"}}<span class="mini-role-badge student" title="Sinh viên"><img src="/web/icons/graduation-cap.svg?v=2.0.0" alt=""></span>{{else if eq .Author.VerificationType "employer"}}<span class="mini-role-badge employer" title="Nhà tuyển dụng"><img src="/web/icons/briefcase-business.svg?v=2.0.0" alt=""></span>{{else if eq .Author.VerificationType "landlord"}}<span class="mini-role-badge landlord" title="Chủ trọ"><img src="/web/icons/house.svg?v=2.0.0" alt=""></span>{{end}} <span class="cat-inline">@{{.Post.CategoryName}}</span></div><div class="mini-author-meta">{{dateVN .Post.CreatedAt}}</div></div></a>{{else}}<div class="mini-author"><span class="mini-avatar">S</span><div><div class="mini-author-name">Sổ tay sinh viên <span class="cat-inline">@{{.Post.CategoryName}}</span></div><div class="mini-author-meta">{{dateVN .Post.CreatedAt}}</div></div></div>{{end}}
+        <div class="post-more-menu" data-post-more>
+          <button type="button" class="post-more-trigger" data-post-more-trigger aria-label="Tùy chọn bài viết" aria-expanded="false">•••</button>
+          <div class="post-more-dropdown" data-post-more-dropdown>
+            {{if .IsLoggedIn}}
+              {{if not .IsOwnPost}}<button type="button" class="post-more-item" data-open-report><img src="/web/icons/circle-help.svg?v=2.0.0" alt=""> Báo cáo bài viết</button>{{end}}
+              {{if and .Author (not .IsOwnPost)}}<form method="post" action="/user/block" onsubmit="return confirm('Chặn tài khoản này? Các bài viết của họ sẽ được ẩn khỏi bảng tin của bạn.')"><input type="hidden" name="user_id" value="{{.Author.ID}}"><input type="hidden" name="next" value="/bai-viet/{{.Post.ID}}"><button class="post-more-item danger" type="submit"><img src="/web/icons/x.svg?v=2.0.0" alt=""> {{if .BlockedAuthor}}Đã chặn tài khoản{{else}}Chặn tài khoản{{end}}</button></form>{{end}}
+              {{if .IsOwnPost}}
+                <a class="post-more-item" href="/bai-viet/sua?id={{.Post.ID}}"><img src="/web/icons/settings.svg?v=2.0.0" alt=""> Sửa bài viết</a>
+                <form method="post" action="/post/delete-own" onsubmit="return confirm('Bạn có chắc muốn xóa bài viết này?')"><input type="hidden" name="id" value="{{.Post.ID}}"><button class="post-more-item danger" type="submit"><img src="/web/icons/x.svg?v=2.0.0" alt=""> Xóa bài viết</button></form>
+              {{end}}
+            {{else}}
+              <a class="post-more-item" href="/login?next=/bai-viet/{{.Post.ID}}"><img src="/web/icons/log-in.svg?v=2.0.0" alt=""> Đăng nhập để báo cáo</a>
+            {{end}}
+          </div>
+        </div>
+      </div>
+      {{if and .PostCategory (eq .PostCategory.PostCardStyle "document")}}
+      <section class="document-viewer-mode">
+        <div class="document-viewer-titlebar">
+          <div><span>TÀI LIỆU HỌC TẬP</span><h1>{{.Post.Title}}</h1></div>
+        </div>
+        <div class="document-viewer-stage">
+          {{if .PostMeta.DocumentFile}}
+            <iframe src="/tai-lieu/xem-truoc/{{.Post.ID}}" title="Xem trước tài liệu {{.Post.Title}}"></iframe>
+          {{else if .PostMeta.ImageURL}}
+            <img src="{{.PostMeta.ImageURL}}" alt="Xem trước tài liệu {{.Post.Title}}" decoding="async" fetchpriority="high">
+          {{else}}
+            <div class="document-viewer-fallback"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""><strong>Tài liệu học tập</strong><p>Chưa có tệp tài liệu để xem trước.</p></div>
+          {{end}}
+        </div>
+        {{if .Post.Content}}<details class="document-description"><summary>Thông tin mô tả tài liệu</summary><div>{{.Post.Content}}</div></details>{{end}}
+        {{if .PostCustomFields}}<section class="content-box extra-info-box custom-info-box document-custom-info"><h2>Thông tin theo chuyên mục</h2><div class="extra-info-grid">{{range .PostCustomFields}}<div><span>{{.Label}}</span><b>{{.Value}}</b></div>{{end}}</div></section>{{end}}
+      </section>
+      {{else}}
+      <h1>{{.Post.Title}}</h1>
+      {{if .PostMeta.ImageURL}}<img class="article-cover" src="{{.PostMeta.ImageURL}}" alt="Ảnh bài viết" decoding="async" fetchpriority="high">{{end}}
+      <div class="article-content">{{.Post.Content}}</div>
+      {{if and (or .PostMeta.Website .PostMeta.Fanpage .PostMeta.CVEmail .PostMeta.CompanyLogo) (or (not .PostCategory) (not .PostCategory.ShowCompanyCard))}}
+      <section class="info-grid">
+        {{if .PostMeta.CompanyLogo}}<div class="info-panel logo-panel"><h3>Logo công ty</h3><img class="company-logo" src="{{.PostMeta.CompanyLogo}}" alt="Logo công ty" loading="lazy" decoding="async"></div>{{end}}
+        {{if .PostMeta.Website}}<div class="info-panel"><h3>Website</h3><a href="{{.PostMeta.Website}}" target="_blank" rel="noopener">{{.PostMeta.Website}}</a></div>{{end}}
+        {{if .PostMeta.Fanpage}}<div class="info-panel"><h3>Fanpage</h3><a href="{{.PostMeta.Fanpage}}" target="_blank" rel="noopener">{{.PostMeta.Fanpage}}</a></div>{{end}}
+        {{if .PostMeta.CVEmail}}<div class="info-panel"><h3>Email nhận CV</h3><a href="mailto:{{.PostMeta.CVEmail}}">{{.PostMeta.CVEmail}}</a></div>{{end}}
+      </section>
+      {{end}}
+      {{if or .PostMeta.ContactName .PostMeta.ContactPhone .PostMeta.Organization .PostMeta.Location .PostMeta.SalaryRange .PostMeta.ApplicationLink .PostMeta.EventTime .PostMeta.Audience .PostMeta.Tags .PostMeta.Source}}
+      <section class="content-box extra-info-box"><h2>Thông tin bổ sung</h2><div class="extra-info-grid">
+        {{if .PostMeta.Organization}}<div><span>Đơn vị / tổ chức</span><b>{{.PostMeta.Organization}}</b></div>{{end}}
+        {{if .PostMeta.ContactName}}<div><span>Người liên hệ</span><b>{{.PostMeta.ContactName}}</b></div>{{end}}
+        {{if .PostMeta.ContactPhone}}<div><span>Số điện thoại</span><b>{{.PostMeta.ContactPhone}}</b></div>{{end}}
+        {{if .PostMeta.Location}}<div><span>Địa điểm</span><b>{{.PostMeta.Location}}</b></div>{{end}}
+        {{if .PostMeta.SalaryRange}}<div><span>Mức lương / hỗ trợ</span><b>{{.PostMeta.SalaryRange}}</b></div>{{end}}
+        {{if .PostMeta.EventTime}}<div><span>Thời gian</span><b>{{.PostMeta.EventTime}}</b></div>{{end}}
+        {{if .PostMeta.Audience}}<div><span>Đối tượng</span><b>{{.PostMeta.Audience}}</b></div>{{end}}
+        {{if .PostMeta.Tags}}<div><span>Từ khóa</span><b>{{.PostMeta.Tags}}</b></div>{{end}}
+        {{if .PostMeta.Source}}<div><span>Nguồn</span><b>{{.PostMeta.Source}}</b></div>{{end}}
+        {{if .PostMeta.ApplicationLink}}<div class="extra-info-link"><span>Đăng ký / ứng tuyển</span><a href="{{.PostMeta.ApplicationLink}}" target="_blank" rel="noopener">Mở liên kết ↗</a></div>{{end}}
+      </div></section>{{end}}
+
+      {{if .PostCustomFields}}
+      <section class="content-box extra-info-box custom-info-box"><h2>Thông tin theo chuyên mục</h2><div class="extra-info-grid">
+        {{range .PostCustomFields}}<div><span>{{.Label}}</span><b>{{.Value}}</b></div>{{end}}
+      </div></section>
+      {{end}}
+
+      {{if and (or .PostMeta.DocumentFile .PostMeta.School .PostMeta.DocumentType .PostMeta.Subject .PostMeta.AcademicYear) (or (not .PostCategory) (ne .PostCategory.PostCardStyle "document"))}}
+      <section class="study-document-panel">
+        <div class="study-document-head"><span class="study-document-icon">DOC</span><div><small>TÀI LIỆU HỌC TẬP</small><h3>{{if .PostMeta.Subject}}{{.PostMeta.Subject}}{{else}}{{.Post.Title}}{{end}}</h3></div></div>
+        <div class="study-document-grid">
+          {{if .PostMeta.School}}<div><span>Trường học</span><b>{{.PostMeta.School}}</b></div>{{end}}
+          {{if .PostMeta.DocumentType}}<div><span>Loại tài liệu</span><b>{{.PostMeta.DocumentType}}</b></div>{{end}}
+          {{if .PostMeta.Subject}}<div><span>Môn học</span><b>{{.PostMeta.Subject}}</b></div>{{end}}
+          {{if .PostMeta.AcademicYear}}<div><span>Niên khóa</span><b>{{.PostMeta.AcademicYear}}</b></div>{{end}}
+        </div>
+        {{if .PostMeta.DocumentFile}}<a class="study-document-download" href="{{.PostMeta.DocumentFile}}" target="_blank" rel="noopener"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""> Xem / tải tài liệu</a>{{end}}
+      </section>
+      {{end}}
+      {{if .PostMeta.RecruitmentContent}}<section class="content-box"><h2>Nội dung tuyển dụng</h2><div>{{.PostMeta.RecruitmentContent}}</div></section>{{end}}
+      {{if .PostMeta.Positions}}<section class="positions-view"><h2>Các vị trí tuyển dụng</h2>{{range $i,$pos := .PostMeta.Positions}}<details class="position-view" {{if eq $i 0}}open{{end}}><summary class="position-summary"><div class="position-summary-copy"><span class="position-summary-label">{{if $pos.Label}}{{$pos.Label}}{{else}}Vị trí tuyển dụng số {{add $i 1}}{{end}}</span>{{if $pos.Name}}<span class="position-summary-name">{{$pos.Name}}</span>{{end}}</div><span class="position-summary-toggle"><img class="inline-icon" src="/web/icons/chevron-down.svg?v=2.0.0" alt=""></span></summary><div class="position-body">{{if $pos.Name}}<h3>{{$pos.Name}}</h3>{{end}}<div class="position-meta">{{if $pos.JobType}}<span>{{$pos.JobType}}</span>{{end}}{{if $pos.Specialty}}<span>{{$pos.Specialty}}</span>{{end}}{{if $pos.Location}}<span>{{$pos.Location}}</span>{{end}}{{if $pos.Salary}}<span>{{$pos.Salary}}</span>{{end}}{{if $pos.Experience}}<span>{{$pos.Experience}}</span>{{end}}</div>{{if $pos.Description}}<h4>Mô tả công việc</h4><p>{{$pos.Description}}</p>{{end}}{{if $pos.Requirement}}<h4>Yêu cầu ứng viên</h4><p>{{$pos.Requirement}}</p>{{end}}{{if $pos.Benefit}}<h4>Chính sách đãi ngộ</h4><p>{{$pos.Benefit}}</p>{{end}}</div></details>{{end}}</section>{{end}}
+      {{end}}
+      <div class="vote-toolbar compact-vote">
+        <form class="vote-pill refined-vote" method="post" action="/post/vote">
+          <input type="hidden" name="post_id" value="{{.Post.ID}}"><input type="hidden" name="next" value="/bai-viet/{{.Post.ID}}">
+          <button class="vote-icon-button {{if eq .UserPostVote 1}}is-selected{{end}}" name="value" value="1" aria-label="Bình chọn tăng"><img class="inline-icon" src="/web/icons/arrow-up.svg?v=2.0.0" alt="Tăng"></button><span class="vote-score">{{.PostStats.Score}}</span><button class="vote-icon-button {{if eq .UserPostVote -1}}is-selected{{end}}" name="value" value="-1" aria-label="Bình chọn giảm"><img class="inline-icon" src="/web/icons/arrow-down.svg?v=2.0.0" alt="Giảm"></button>
+        </form>
+        <a class="meta-pill" href="#comments"><img class="inline-icon" src="/web/icons/message-circle.svg?v=2.0.0" alt=""> {{.PostStats.Comments}}</a>
+        <button type="button" class="meta-pill share-btn" data-url="/bai-viet/{{.Post.ID}}"><img class="inline-icon" src="/web/icons/share-2.svg?v=2.0.0" alt=""> Chia sẻ</button>
+      </div>
+    </article>
+
+    <section class="comments-card" id="comments">
+      <div class="comments-head"><h2>Bình luận thảo luận</h2><span>{{.PostStats.Comments}} phản hồi</span></div>
+      {{if .IsLoggedIn}}
+      <form class="comment-form" method="post" action="/comment/add">
+        <input type="hidden" name="post_id" value="{{.Post.ID}}">
+        <input type="hidden" name="parent_id" value="0">
+        <input type="hidden" name="next" value="/bai-viet/{{.Post.ID}}">
+        <textarea name="content" rows="4" placeholder="Chia sẻ ý kiến của bạn..." required></textarea>
+        <div class="comment-submit"><button>Đăng bình luận</button></div>
+      </form>
+      {{else}}
+      <div class="comment-login-note">Bạn cần <a href="/login?next=/bai-viet/{{.Post.ID}}">đăng nhập</a> để bình chọn và bình luận.</div>
+      {{end}}
+      <div class="comment-list">
+        {{if .Comments}}
+          {{range .Comments}}{{template "commentNode" .}}{{end}}
+        {{else}}
+          <div class="empty-comments">Chưa có bình luận nào. Hãy là người đầu tiên bắt đầu thảo luận.</div>
+        {{end}}
+      </div>
+    </section>
+  </section>
+
+  <aside class="right-rail">
+    {{if and .PostCategory (eq .PostCategory.PostCardStyle "document")}}
+    <section class="side-block document-summary-card">
+      <div class="document-summary-head"><span class="document-summary-icon"><img src="/web/icons/file-text.svg?v=2.0.0" alt=""></span><div><small>TÀI LIỆU</small><h3>Tóm tắt tài liệu</h3></div></div>
+      <div class="document-summary-meta">
+        {{if .PostMeta.Subject}}<div><span>Môn học</span><b>{{.PostMeta.Subject}}</b></div>{{end}}
+        {{if .PostMeta.DocumentType}}<div><span>Loại tài liệu</span><b>{{.PostMeta.DocumentType}}</b></div>{{end}}
+        {{if .PostMeta.School}}<div><span>Trường học</span><b>{{.PostMeta.School}}</b></div>{{end}}
+        {{if .PostMeta.AcademicYear}}<div><span>Niên khóa</span><b>{{.PostMeta.AcademicYear}}</b></div>{{end}}
+      </div>
+      {{if .Post.Summary}}<p class="document-summary-text">{{.Post.Summary}}</p>{{else if .Post.Content}}<p class="document-summary-text">{{excerpt .Post.Content}}</p>{{end}}
+      {{if .PostMeta.DocumentFile}}<a class="document-summary-download" href="{{.PostMeta.DocumentFile}}" download><img src="/web/icons/file-text.svg?v=2.0.0" alt=""> Tải tài liệu về</a>{{end}}
+    </section>
+    {{else if and .PostCategory .PostCategory.ShowCompanyCard (or .PostMeta.CompanyLogo .PostMeta.Website .PostMeta.Fanpage .PostMeta.CVEmail .PostMeta.Deadline .PostMeta.Positions)}}<section class="side-block company-summary-card company-card-{{.PostCategory.CompanyCardStyle}}">
+      <div class="company-summary-body">
+        <div class="company-logo-stack"><div class="company-logo-box company-logo-circle">{{if .PostMeta.CompanyLogo}}<img class="company-summary-logo" src="{{.PostMeta.CompanyLogo}}" alt="Logo công ty" loading="lazy" decoding="async">{{else}}<span class="company-logo-fallback">{{slice .Post.Title 0 1}}</span>{{end}}</div><h3 class="company-title-under-logo">{{.Post.Title}}</h3></div>
+        <div class="company-summary-meta">
+          {{if .PostMeta.Website}}<a class="company-meta-item" href="{{.PostMeta.Website}}" target="_blank" rel="noopener"><img class="inline-icon" src="/web/icons/external-link.svg?v=2.0.0" alt=""> <span>{{.PostMeta.Website}}</span></a>{{end}}
+          {{if .PostMeta.Fanpage}}<a class="company-meta-item" href="{{.PostMeta.Fanpage}}" target="_blank" rel="noopener"><img class="inline-icon" src="/web/icons/share-2.svg?v=2.0.0" alt=""> <span>{{.PostMeta.Fanpage}}</span></a>{{end}}
+          {{if .PostMeta.CVEmail}}<a class="company-meta-item" href="mailto:{{.PostMeta.CVEmail}}"><img class="inline-icon" src="/web/icons/mail.svg?v=2.0.0" alt=""> <span>{{.PostMeta.CVEmail}}</span></a>{{end}}
+          {{if .PostMeta.Deadline}}<div class="company-meta-item"><img class="inline-icon" src="/web/icons/calendar-days.svg?v=2.0.0" alt=""> <span>Hạn cuối: <b>{{.PostMeta.Deadline}}</b></span></div>{{end}}
+          {{if .PostMeta.Positions}}<div class="company-meta-item"><img class="inline-icon" src="/web/icons/briefcase-business.svg?v=2.0.0" alt=""> <span>{{len .PostMeta.Positions}} vị trí đang tuyển</span></div>{{end}}
+        </div>
+      </div>
+    </section>{{end}}
+    <section class="suggest-card side-block {{if and .PostCategory (eq .PostCategory.PostCardStyle "document")}}document-suggestions{{end}}"><h3><img class="inline-icon" src="/web/icons/thumbs-up.svg?v=2.0.0" alt=""> {{if and .PostCategory (eq .PostCategory.PostCardStyle "document")}}TÀI LIỆU GỢI Ý{{else}}CÓ THỂ BẠN THÍCH{{end}}</h3>{{range .Suggested}}<article class="suggest-item"><div class="suggest-top"><b>@{{.Post.CategoryName}}</b><span>{{dateVN .Post.CreatedAt}}</span></div>{{if .Meta.DocumentFile}}<a class="suggest-document-preview" href="/bai-viet/{{.Post.ID}}"><iframe src="/tai-lieu/xem-truoc/{{.Post.ID}}" title="Xem trước {{.Post.Title}}" loading="lazy" tabindex="-1"></iframe></a>{{else if .Meta.ImageURL}}<a href="/bai-viet/{{.Post.ID}}"><img src="{{.Meta.ImageURL}}" alt="{{.Post.Title}}" loading="lazy" decoding="async"></a>{{else}}<a class="suggest-fallback" href="/bai-viet/{{.Post.ID}}"><span>{{slice .Post.CategoryName 0 1}}</span></a>{{end}}<a class="suggest-title" href="/bai-viet/{{.Post.ID}}">{{.Post.Title}}</a><p>{{excerpt .Post.Summary}}</p><div class="suggest-actions"><span>{{.Stats.Score}} điểm</span><span>{{.Stats.Comments}} bình luận</span></div></article>{{end}}</section>
+    {{if .RightAd}}<a class="ad-card managed-ad" href="{{if .RightAd.LinkURL}}{{.RightAd.LinkURL}}{{else}}#{{end}}" {{if .RightAd.LinkURL}}target="_blank" rel="noopener"{{end}}><span class="ad-kicker">Quảng cáo</span>{{if .RightAd.Title}}<strong>{{.RightAd.Title}}</strong>{{end}}{{if .RightAd.Description}}<p>{{.RightAd.Description}}</p>{{end}}{{if .RightAd.ImageURL}}<img class="managed-ad-image" src="{{.RightAd.ImageURL}}" alt="{{.RightAd.Title}}" loading="lazy" decoding="async" fetchpriority="low">{{end}}{{if .RightAd.LinkURL}}<span class="ad-btn">Xem ngay</span>{{end}}</a>{{else}}<div class="ad-card ad-pink"><span class="ad-kicker">Cộng đồng</span><strong>Xu hướng sinh viên</strong><p>Kết nối, trao đổi học tập và khám phá cơ hội mới từ các bài viết trong hệ thống.</p></div>{{end}}
+  </aside>
+</main>
+
+{{if and .IsLoggedIn (not .IsOwnPost)}}
+<div id="reportPostModal" class="post-action-modal" aria-hidden="true">
+  <div class="post-action-dialog">
+    <div class="post-action-head"><div><span>BÁO CÁO NỘI DUNG</span><h3>Báo cáo bài viết</h3></div><button type="button" data-close-report>×</button></div>
+    <p>Chọn lý do phù hợp. Báo cáo sẽ được chuyển tới khu kiểm duyệt của quản trị viên.</p>
+    <form method="post" action="/post/report">
+      <input type="hidden" name="post_id" value="{{.Post.ID}}"><input type="hidden" name="next" value="/bai-viet/{{.Post.ID}}">
+      <label><input type="radio" name="reason" value="Spam hoặc quảng cáo không phù hợp" required> Spam hoặc quảng cáo không phù hợp</label>
+      <label><input type="radio" name="reason" value="Nội dung sai sự thật hoặc gây hiểu nhầm"> Nội dung sai sự thật hoặc gây hiểu nhầm</label>
+      <label><input type="radio" name="reason" value="Nội dung xúc phạm hoặc quấy rối"> Nội dung xúc phạm hoặc quấy rối</label>
+      <label><input type="radio" name="reason" value="Nội dung khác cần quản trị viên kiểm tra"> Nội dung khác cần quản trị viên kiểm tra</label>
+      <div class="post-action-actions"><button type="button" class="ghost-action" data-close-report>Hủy</button><button type="submit" class="danger-action">Gửi báo cáo</button></div>
+    </form>
+  </div>
+</div>
+{{end}}
+
+<script src="/web/post/post.js?v=2.0.0"></script>
+<script src="/web/shared/header.js?v=2.0.0"></script>
+</body></html>{{end}}
