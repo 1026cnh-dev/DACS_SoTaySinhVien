@@ -17,8 +17,8 @@ Dự án bao gồm đầy đủ các tính năng cơ bản của một diễn đ
 Dự án tuân theo cấu trúc phân chia module chuẩn của Go để dễ dàng bảo trì và mở rộng:
 
 ```text
-├── app/                  # (Có thể chứa các file ứng dụng cũ, hiện tại tập trung vào internal)
-├── config/               # Chứa file cấu hình môi trường (.env)
+├── app/                  
+├── config/               # File cấu hình môi trường (.env)
 │   ├── local.env         # Cấu hình chạy local
 │   ├── production.env    # Cấu hình chạy production
 │   └── environment       # Script load cấu hình
