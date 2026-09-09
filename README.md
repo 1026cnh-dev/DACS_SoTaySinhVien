@@ -1,4 +1,4 @@
-# Nền tảng Chia sẻ Bài viết (Golang & Supabase)
+# Mạng xã hội cho sinh viên
 
 Dự án này là một ứng dụng web dạng nền tảng chia sẻ bài viết, được xây dựng với kiến trúc backend sử dụng ngôn ngữ Go (Golang) kết hợp với cơ sở dữ liệu PostgreSQL (thông qua Supabase). 
 
