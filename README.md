@@ -4,7 +4,7 @@ Dự án này là một ứng dụng web dạng nền tảng chia sẻ bài vi�
 
 Dự án bao gồm đầy đủ các tính năng cơ bản của một diễn đàn / blog cá nhân cho phép người dùng đăng nhập, tạo bài viết, lưu nháp, quản lý hồ sơ và tương tác với các nội dung.
 
-## 🚀 Công nghệ sử dụng
+## Công nghệ sử dụng
 
 *   **Backend:** Go (Golang)
 *   **Database:** PostgreSQL (quản lý bởi Supabase)
@@ -12,7 +12,7 @@ Dự án bao gồm đầy đủ các tính năng cơ bản của một diễn đ
 *   **Containerization:** Docker
 *   **Routing/API:** Go `net/http` tiêu chuẩn.
 
-## 📁 Cấu trúc thư mục dự án
+## Cấu trúc thư mục dự án
 
 Dự án tuân theo cấu trúc phân chia module chuẩn của Go để dễ dàng bảo trì và mở rộng:
 
@@ -51,7 +51,7 @@ Dự án tuân theo cấu trúc phân chia module chuẩn của Go để dễ d�
 └── run-local.sh / .bat   # Script khởi chạy dự án môi trường Dev
 ```
 
-## ✨ Các chức năng chính (Core Features)
+## Các chức năng chính (Core Features)
 
 1.  **Quản lý người dùng (Authentication & Profile):**
     *   Đăng nhập, đăng ký tài khoản.
@@ -67,7 +67,7 @@ Dự án tuân theo cấu trúc phân chia module chuẩn của Go để dễ d�
 4.  **Quản trị viên (Admin Panel):**
     *   Giao diện dành riêng cho Admin (`web/admin`) để quản lý nội dung và người dùng toàn hệ thống.
 
-## 🛠 Hướng dẫn cài đặt và chạy dự án (Local)
+## Hướng dẫn cài đặt và chạy dự án (Local)
 
 1. **Yêu cầu hệ thống:**
    * Cài đặt sẵn [Go](https://go.dev/dl/).
@@ -99,7 +99,7 @@ Dự án tuân theo cấu trúc phân chia module chuẩn của Go để dễ d�
      run-local.bat
      ```
 
-## 🐳 Docker (Dành cho Production)
+## Docker (Dành cho Production)
 
 Dự án hỗ trợ chạy trong container. Để build và chạy bằng Docker:
 ```bash
